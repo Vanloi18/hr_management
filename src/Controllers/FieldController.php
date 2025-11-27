@@ -19,18 +19,35 @@ class FieldController extends Controller
     public function index()
     {
         $this->requireAdmin();
-        $fields = $this->fieldModel->all(); 
 
+        // 1. Lấy tham số
+        $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
+        $page    = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($page < 1) $page = 1;
+
+        $limit  = 10;
+        $offset = ($page - 1) * $limit;
+
+        // 2. Lấy dữ liệu
+        $fields = $this->fieldModel->getPaginated($keyword, $limit, $offset);
+        $totalRecords = $this->fieldModel->countAll($keyword);
+        $totalPages = ceil($totalRecords / $limit);
+
+        // 3. Đóng gói dữ liệu
         $data = [
-            'title' => 'Quản lý Lĩnh vực',
-            'fields' => $fields
+            'title'        => 'Quản lý Lĩnh vực',
+            'fields'       => $fields,
+            'currentPage'  => $page,
+            'totalPages'   => $totalPages,
+            'totalRecords' => $totalRecords,
+            'keyword'      => $keyword
         ];
 
-        // 🔥 LOGIC PJAX MỚI
+        // 4. Xử lý AJAX
         if (isAjaxRequest()) {
             return partial('fields/index', $data);
         }
-        
+
         return view('fields/index', $data);
     }
 

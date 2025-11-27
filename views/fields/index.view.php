@@ -1,22 +1,32 @@
 <div class="container-fluid py-4 bg-light">
-    <div class="card border-0 shadow-sm rounded-4">
-        
-        <div class="card-header bg-white border-0 pt-4 pb-3 px-4 rounded-top-4">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                <div>
-                    <h4 class="mb-1 fw-bold text-dark">
-                        <?php echo e($title); ?>
-                    </h4>
-                    <p class="mb-0 text-secondary small">Danh mục các ngành nghề và lĩnh vực hoạt động</p>
+    <div class="row align-items-center mb-4">
+        <div class="col-md-6">
+            <h4 class="fw-bold text-dark mb-1">Quản lý Lĩnh vực</h4>
+            <p class="text-secondary small mb-0">Danh mục ngành nghề và phân loại công việc</p>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <div class="row g-3 align-items-center justify-content-between">
+                <div class="col-md-6 col-lg-5">
+                    <form action="<?php echo BASE_URL; ?>/fields" method="GET" class="position-relative">
+                        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+                        <input type="text" name="keyword" class="form-control form-control-lg ps-5 rounded-pill bg-light border-0" 
+                               placeholder="Tìm tên lĩnh vực, mô tả..." 
+                               value="<?php echo isset($keyword) ? e($keyword) : ''; ?>">
+                    </form>
                 </div>
-                
-                <a href="<?php echo BASE_URL; ?>/fields/create" 
-                   class="btn btn-primary rounded-pill px-4 fw-medium shadow-sm">
-                    <i class="bi bi-plus-lg me-1"></i> Thêm Lĩnh vực
-                </a>
+                <div class="col-md-6 col-lg-7 text-md-end">
+                    <a href="<?php echo BASE_URL; ?>/fields/create" class="btn btn-primary rounded-pill px-4 py-2 fw-medium shadow-sm">
+                        <i class="bi bi-plus-lg me-1"></i> Thêm Lĩnh vực
+                    </a>
+                </div>
             </div>
         </div>
+    </div>
 
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" style="font-size: 0.95rem;">
@@ -24,7 +34,7 @@
                         <tr>
                             <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small" style="width: 100px;">Mã LV</th>
                             <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small">Tên Lĩnh vực</th>
-                            <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small">Mô tả</th>
+                            <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small">Tin tuyển dụng</th> <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small">Mô tả</th>
                             <th class="py-3 px-4 text-end text-secondary fw-semibold text-uppercase small" style="width: 150px;">Hành động</th>
                         </tr>
                     </thead>
@@ -32,7 +42,6 @@
                     <tbody>
                         <?php foreach ($fields as $field): ?>
                             <tr id="row-field-<?php echo e($field['id']); ?>" class="border-bottom-dashed">
-                                
                                 <td class="px-4 py-3">
                                     <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-10 px-3 py-2 rounded-pill font-monospace">
                                         #<?php echo e($field['id']); ?>
@@ -47,41 +56,45 @@
                                         </div>
                                         <div>
                                             <span class="fw-bold text-dark d-block"><?php echo e($field['field_name']); ?></span>
-                                            <span class="small text-muted">Active</span>
+                                            <span class="small text-muted">Hoạt động</span>
                                         </div>
                                     </div>
+                                </td>
+
+                                <td class="px-4 py-3">
+                                    <?php $count = $field['position_count'] ?? 0; ?>
+                                    <?php if ($count > 0): ?>
+                                        <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill border border-info border-opacity-10">
+                                            <i class="bi bi-briefcase-fill me-1"></i> <?php echo $count; ?> Vị trí
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="text-muted small fst-italic ms-1">Chưa có tin</span>
+                                    <?php endif; ?>
                                 </td>
                                 
                                 <td class="px-4 py-3">
                                     <?php if (!empty($field['description'])): ?>
-                                        <span class="text-secondary small text-truncate d-block" style="max-width: 350px;">
+                                        <span class="text-secondary small text-truncate d-block" style="max-width: 300px;" title="<?php echo e($field['description']); ?>">
                                             <?php echo e($field['description']); ?>
                                         </span>
                                     <?php else: ?>
-                                        <span class="text-muted small fst-italic opacity-50">Chưa có mô tả chi tiết</span>
+                                        <span class="text-muted small fst-italic opacity-50">--</span>
                                     <?php endif; ?>
                                 </td>
                                 
                                 <td class="px-4 py-3 text-end">
                                     <div class="d-flex justify-content-end gap-2">
                                         <a href="<?php echo BASE_URL; ?>/fields/edit?id=<?php echo e($field['id']); ?>" 
-                                           class="btn btn-sm btn-light text-primary border-0" 
-                                           title="Chỉnh sửa"
-                                           data-bs-toggle="tooltip">
+                                           class="btn btn-sm btn-light text-primary border-0 btn-icon" 
+                                           title="Chỉnh sửa" data-bs-toggle="tooltip">
                                             <i class="bi bi-pencil-square"></i>
                                         </a>
                                         
-                                        <form method="POST" 
-                                              action="<?php echo BASE_URL; ?>/fields/delete" 
-                                              class="form-delete-ajax" 
-                                              data-row-id="row-field-<?php echo e($field['id']); ?>">
-                                            <?php csrf_field(); ?>
+                                        <form method="POST" action="<?php echo BASE_URL; ?>/fields/delete" 
+                                              class="d-inline-block" onsubmit="return confirm('Bạn có chắc chắn muốn xóa lĩnh vực này?');">
                                             <input type="hidden" name="id" value="<?php echo e($field['id']); ?>">
-                                            
-                                            <button type="submit" 
-                                                    class="btn btn-sm btn-light text-danger border-0" 
-                                                    title="Xóa lĩnh vực"
-                                                    data-bs-toggle="tooltip">
+                                            <button type="submit" class="btn btn-sm btn-light text-danger border-0 btn-icon" 
+                                                    title="Xóa lĩnh vực" data-bs-toggle="tooltip">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
@@ -92,13 +105,10 @@
                         
                         <?php if (empty($fields)): ?>
                             <tr>
-                                <td colspan="4" class="text-center py-5">
-                                    <div class="py-4">
-                                        <i class="bi bi-tags text-secondary opacity-25" style="font-size: 3rem;"></i>
+                                <td colspan="5" class="text-center py-5">
+                                    <div class="py-4 opacity-50">
+                                        <i class="bi bi-tags text-secondary" style="font-size: 3rem;"></i>
                                         <p class="text-muted mt-3 mb-2">Chưa có dữ liệu lĩnh vực</p>
-                                        <a href="<?php echo BASE_URL; ?>/fields/create" class="btn btn-sm btn-primary rounded-pill px-3">
-                                            Thêm mới ngay
-                                        </a>
                                     </div>
                                 </td>
                             </tr>
@@ -106,33 +116,24 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-        
-        <div class="card-footer bg-white border-0 py-3 px-4 rounded-bottom-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <span class="text-muted small">
-                    Tổng số: <strong class="text-dark"><?php echo count($fields); ?></strong> lĩnh vực
-                </span>
-                <span class="text-muted small">
-                    <i class="bi bi-check-circle text-success me-1"></i>System Standard
-                </span>
+
+            <div class="px-4 py-3 border-top bg-white rounded-bottom-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                    <span class="text-secondary small">
+                        Hiển thị <strong><?php echo count($fields); ?></strong> trên tổng số <strong><?php echo $totalRecords ?? 0; ?></strong> lĩnh vực
+                    </span>
+                    <?php require BASE_PATH . 'views/partials/pagination.view.php'; ?>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    .table-hover tbody tr:hover {
-        background-color: rgba(0,0,0,0.015);
-    }
-    .border-bottom-dashed {
-        border-bottom: 1px dashed #dee2e6 !important;
-    }
-    .btn-light:hover {
-        background-color: #e9ecef;
-        transform: translateY(-1px);
-        transition: all 0.2s ease;
-    }
+    .table-hover tbody tr:hover { background-color: rgba(0,0,0,0.015); }
+    .border-bottom-dashed { border-bottom: 1px dashed #dee2e6 !important; }
+    .btn-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .btn-icon:hover { transform: scale(1.1); filter: brightness(0.95); background-color: #e9ecef; }
 </style>
 
 <script>

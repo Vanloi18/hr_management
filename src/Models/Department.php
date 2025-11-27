@@ -43,4 +43,45 @@ class Department extends Model
     {
         return $this->db->query("DELETE FROM departments WHERE id = :id", ['id' => $id]);
     }
+
+    /**
+     * Lấy danh sách phòng ban: Phân trang + Tìm kiếm + Đếm số nhân viên
+     */
+    public function getPaginated($keyword = '', $limit = 10, $offset = 0)
+    {
+        // Subquery để đếm số nhân viên (employee_count)
+        // Giả định bảng nhân viên là 'employees' và khóa ngoại là 'department_id'
+        $sql = "SELECT d.*, 
+                       (SELECT COUNT(*) FROM employees e WHERE e.department_id = d.id) as employee_count
+                FROM departments d 
+                WHERE 1=1";
+        
+        $params = [];
+
+        if (!empty($keyword)) {
+            $sql .= " AND d.name LIKE ?";
+            $params[] = "%$keyword%";
+        }
+
+        $sql .= " ORDER BY d.id DESC LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
+
+        return $this->db->query($sql, $params)->fetchAll();
+    }
+
+    /**
+     * Đếm tổng số phòng ban
+     */
+    public function countAll($keyword = '')
+    {
+        $sql = "SELECT COUNT(*) as total FROM departments WHERE 1=1";
+        $params = [];
+
+        if (!empty($keyword)) {
+            $sql .= " AND name LIKE ?";
+            $params[] = "%$keyword%";
+        }
+
+        $result = $this->db->query($sql, $params)->fetch();
+        return $result ? (int)$result['total'] : 0;
+    }
 }

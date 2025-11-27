@@ -16,26 +16,38 @@ class DepartmentController extends Controller
         $this->departmentModel = new Department();
     }
 
-    /**
-     * Hàm index() giữ nguyên từ file gốc
-     */
     public function index()
     {
         $this->checkAuthentication();
-        $departments = $this->departmentModel->all();
-        
+
+        // 1. Lấy tham số
+        $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
+        $page    = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($page < 1) $page = 1;
+
+        $limit  = 10;
+        $offset = ($page - 1) * $limit;
+
+        // 2. Lấy dữ liệu
+        $departments = $this->departmentModel->getPaginated($keyword, $limit, $offset);
+        $totalRecords = $this->departmentModel->countAll($keyword);
+        $totalPages = ceil($totalRecords / $limit);
+
+        // 3. Đóng gói dữ liệu
         $data = [
-            'title' => 'Quản lý Phòng ban',
-            'departments' => $departments
+            'title'        => 'Quản lý Phòng ban',
+            'departments'  => $departments,
+            'currentPage'  => $page,
+            'totalPages'   => $totalPages,
+            'totalRecords' => $totalRecords,
+            'keyword'      => $keyword
         ];
 
-        // 🔥 LOGIC PJAX MỚI
+        // 4. Xử lý AJAX
         if (isAjaxRequest()) {
-            // Nếu là AJAX, chỉ trả về "ruột"
             return partial('departments/index', $data);
         }
-        
-        // Nếu là tải trang bình thường, trả về "vỏ" + "ruột"
+
         return view('departments/index', $data);
     }
 

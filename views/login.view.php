@@ -208,7 +208,23 @@ $title = "Đăng nhập hệ thống";
 
             <h2 class="card-title text-center mb-2">Đăng nhập hệ thống</h2>
             <p class="text-center text-muted mb-4">Quản lý tuyển dụng</p>
+                <?php if (isset($_SESSION['auth_message'])): ?>
+                    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill me-2 fs-5 text-success"></i>
+                            <div>
+                                <strong>Thành công!</strong> <?php echo $_SESSION['auth_message']['text']; ?>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
 
+                    <?php 
+                    // QUAN TRỌNG: Xóa ngay session này sau khi đã hiển thị
+                    // Để khi F5 lại trang, thông báo này sẽ biến mất
+                    unset($_SESSION['auth_message']); 
+                    ?>
+                <?php endif; ?>
             <form method="POST" action="<?php echo BASE_URL; ?>/login" id="form-login">
                 <?php csrf_field(); ?>
                 

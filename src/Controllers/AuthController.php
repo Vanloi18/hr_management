@@ -34,7 +34,8 @@ class AuthController extends Controller
                 'id' => $user['id'],
                 'full_name' => $user['full_name'],
                 'email' => $user['email'],
-                'role' => $user['role']
+                'role' => $user['role'],
+                'avatar' => $user['avatar']
             ];
             redirect('/'); // Sửa redirect
         } else {
@@ -44,8 +45,19 @@ class AuthController extends Controller
     }
 
     public function logout()
-    {
-        session_destroy();
-        redirect('/login'); // Sửa redirect
+{
+    // 1. Xóa session login của user
+    if (isset($_SESSION['user'])) {
+        unset($_SESSION['user']);
     }
+
+    // 2. Gán thông báo vào SESSION (Dùng tên key dễ nhớ là 'auth_message')
+    $_SESSION['auth_message'] = [
+        'type' => 'success',
+        'text' => 'Bạn đã đăng xuất thành công!'
+    ];
+
+    // 3. Chuyển hướng
+    redirect('/login');
+}
 }

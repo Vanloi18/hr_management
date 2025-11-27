@@ -14,6 +14,10 @@
     $router->post('/login', 'AuthController@login');
     $router->get('/logout', 'AuthController@logout');
 
+    // --- ROUTE CHO PROFILE (HỒ SƠ CÁ NHÂN) ---
+    $router->get('/profile', 'ProfileController@index');        
+    $router->post('/profile/update', 'ProfileController@update');
+
     // ----- Routes cho Quản lý Nhân viên (chỉ Admin) -----
     $router->get('/users', 'UserController@index');       
     $router->get('/users/create', 'UserController@create');

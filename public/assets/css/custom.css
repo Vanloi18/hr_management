@@ -175,8 +175,6 @@ body {
     font-weight: 500;
 }
 
-<style>
-
 /* Modern Footer Styles */
 .footer {
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
@@ -323,5 +321,3 @@ body {
 .footer {
     animation: slideUp 0.4s ease;
 }
-
-</style>

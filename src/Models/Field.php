@@ -55,4 +55,47 @@ class Field extends Model
     {
         return $this->db->query("DELETE FROM fields WHERE id = :id", ['id' => $id]);
     }
+
+    public function getPaginated($keyword = '', $limit = 10, $offset = 0)
+    {
+        // Subquery để đếm số tin tuyển dụng thuộc lĩnh vực này
+        // Giả định bảng tin tuyển dụng là 'positions' và khóa ngoại là 'field_id'
+        $sql = "SELECT f.*, 
+                       (SELECT COUNT(*) FROM positions p WHERE p.field_id = f.id) as position_count
+                FROM fields f 
+                WHERE 1=1";
+        
+        $params = [];
+
+        // Tìm kiếm theo tên lĩnh vực hoặc mô tả
+        if (!empty($keyword)) {
+            $sql .= " AND (f.field_name LIKE ? OR f.description LIKE ?)";
+            $keywordParam = "%$keyword%";
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+        }
+
+        $sql .= " ORDER BY f.id DESC LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
+
+        return $this->db->query($sql, $params)->fetchAll();
+    }
+
+    /**
+     * Đếm tổng số lĩnh vực
+     */
+    public function countAll($keyword = '')
+    {
+        $sql = "SELECT COUNT(*) as total FROM fields WHERE 1=1";
+        $params = [];
+
+        if (!empty($keyword)) {
+            $sql .= " AND (field_name LIKE ? OR description LIKE ?)";
+            $keywordParam = "%$keyword%";
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+        }
+
+        $result = $this->db->query($sql, $params)->fetch();
+        return $result ? (int)$result['total'] : 0;
+    }
 }
