@@ -1,101 +1,102 @@
 <?php
-// views/partials/pagination.view.php
-
-// --- DEBUG: Hiển thị thông số để kiểm tra (Xóa sau khi fix xong) ---
-if (isset($totalRecords)) {
-    // echo "<div class='alert alert-info py-1 small'>Debug: Tìm thấy {$totalRecords} kết quả | Tổng {$totalPages} trang.</div>";
-}
-// ------------------------------------------------------------------
-
-// 1. Kiểm tra logic
-if (empty($totalPages) || $totalPages <= 1) {
-    return; // Nếu chỉ có 1 trang thì ẩn phân trang
+// 1. Kiểm tra logic cơ bản
+if (!isset($totalPages) || $totalPages <= 1) {
+    return;
 }
 
-// 2. Thiết lập Link chuẩn (Dùng BASE_URL để tránh lỗi server)
-// Lưu ý: Đảm bảo biến BASE_URL không có dấu / ở cuối
-$targetUrl = BASE_URL . '/users'; 
-
-// 3. Giữ lại tham số tìm kiếm (role, keyword)
+// 2. Lấy tham số URL hiện tại để giữ lại bộ lọc (keyword, status...)
 $queryParams = $_GET;
-unset($queryParams['page']); // Xóa page cũ
 
-// Hàm tạo link an toàn
-function buildPageLink($url, $params, $page) {
+// Hàm helper tạo link
+function getPageLink($params, $page) {
     $params['page'] = $page;
-    return $url . '?' . http_build_query($params);
+    return '?' . http_build_query($params);
 }
 
-$window = 2; // Số trang hiển thị 2 bên
+// --- CẤU HÌNH ĐỘ GỌN CỦA PHÂN TRANG ---
+$range = 1; // Chỉ hiển thị 1 trang bên cạnh trang hiện tại (Ví dụ: ... 4 [5] 6 ...)
+// ---------------------------------------
 ?>
 
-<nav aria-label="Page navigation" class="mt-3">
-    <ul class="pagination pagination-sm justify-content-center justify-content-md-end mb-0">
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination pagination-sm justify-content-end mb-0 gap-1 flex-wrap">
 
-        <?php if ($currentPage > 1): ?>
-            <li class="page-item">
-                <a class="page-link rounded-2 border-0 bg-light text-secondary me-1" 
-                   href="<?php echo buildPageLink($targetUrl, $queryParams, $currentPage - 1); ?>">
-                   <i class="bi bi-chevron-left"></i>
-                </a>
-            </li>
-        <?php else: ?>
-            <li class="page-item disabled">
-                <span class="page-link rounded-2 border-0 bg-light text-muted me-1"><i class="bi bi-chevron-left"></i></span>
-            </li>
-        <?php endif; ?>
+        <li class="page-item <?php echo ($currentPage <= 1) ? 'disabled' : ''; ?>">
+            <a class="page-link rounded-2 border-0 d-flex align-items-center justify-content-center" 
+               href="<?php echo ($currentPage <= 1) ? '#' : getPageLink($queryParams, $currentPage - 1); ?>" 
+               style="width: 36px; height: 36px;">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
 
-
-        <?php
-        $start = max(1, $currentPage - $window);
-        $end = min($totalPages, $currentPage + $window);
-
-        // Logic hiển thị dấu "..."
-        if ($currentPage - $window < 1) {
-            $end = min($totalPages, $start + ($window * 2));
-        }
-        if ($currentPage + $window > $totalPages) {
-            $start = max(1, $end - ($window * 2));
-        }
-
-        // Trang 1
-        if ($start > 1) {
-            echo '<li class="page-item"><a class="page-link rounded-2 border-0 text-secondary" href="' . buildPageLink($targetUrl, $queryParams, 1) . '">1</a></li>';
-            if ($start > 2) echo '<li class="page-item disabled"><span class="page-link border-0">...</span></li>';
-        }
-
-        // Loop các trang giữa
-        for ($i = $start; $i <= $end; $i++): 
-            $isActive = ($i == $currentPage);
-        ?>
-            <li class="page-item <?php echo $isActive ? 'active' : ''; ?>">
-                <a class="page-link rounded-2 border-0 mx-1 <?php echo $isActive ? 'bg-primary text-white shadow-sm' : 'text-secondary'; ?>" 
-                   href="<?php echo buildPageLink($targetUrl, $queryParams, $i); ?>">
-                    <?php echo $i; ?>
-                </a>
-            </li>
+        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+            <?php 
+                // Logic: Luôn hiện trang 1 và trang cuối ($totalPages)
+                // Và hiện các trang nằm trong khoảng $range xung quanh trang hiện tại
+                if ($i == 1 || $i == $totalPages || ($i >= $currentPage - $range && $i <= $currentPage + $range)): 
+            ?>
+                <li class="page-item <?php echo ($i == $currentPage) ? 'active' : ''; ?>">
+                    <a class="page-link rounded-2 border-0 fw-medium d-flex align-items-center justify-content-center" 
+                       href="<?php echo getPageLink($queryParams, $i); ?>"
+                       style="min-width: 36px; height: 36px; padding: 0 10px;">
+                        <?php echo $i; ?>
+                    </a>
+                </li>
+            
+            <?php elseif (
+                ($i == $currentPage - $range - 1) || 
+                ($i == $currentPage + $range + 1)
+            ): 
+                // Logic: Chỉ hiển thị dấu "..." nếu có khoảng cách
+            ?>
+                <li class="page-item disabled">
+                    <span class="page-link border-0 bg-transparent text-muted d-flex align-items-end justify-content-center" 
+                          style="width: 36px; height: 36px;">...</span>
+                </li>
+            <?php endif; ?>
         <?php endfor; ?>
 
-        // Trang cuối
-        if ($end < $totalPages) {
-            if ($end < $totalPages - 1) echo '<li class="page-item disabled"><span class="page-link border-0">...</span></li>';
-            echo '<li class="page-item"><a class="page-link rounded-2 border-0 text-secondary" href="' . buildPageLink($targetUrl, $queryParams, $totalPages) . '">' . $totalPages . '</a></li>';
-        }
-        ?>
-
-
-        <?php if ($currentPage < $totalPages): ?>
-            <li class="page-item">
-                <a class="page-link rounded-2 border-0 bg-light text-primary ms-1" 
-                   href="<?php echo buildPageLink($targetUrl, $queryParams, $currentPage + 1); ?>">
-                   <i class="bi bi-chevron-right"></i>
-                </a>
-            </li>
-        <?php else: ?>
-            <li class="page-item disabled">
-                <span class="page-link rounded-2 border-0 bg-light text-muted ms-1"><i class="bi bi-chevron-right"></i></span>
-            </li>
-        <?php endif; ?>
+        <li class="page-item <?php echo ($currentPage >= $totalPages) ? 'disabled' : ''; ?>">
+            <a class="page-link rounded-2 border-0 d-flex align-items-center justify-content-center" 
+               href="<?php echo ($currentPage >= $totalPages) ? '#' : getPageLink($queryParams, $currentPage + 1); ?>"
+               style="width: 36px; height: 36px;">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
 
     </ul>
 </nav>
+
+<style>
+    /* Ép buộc hiển thị hàng ngang */
+    .pagination {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+    }
+
+    .pagination .page-link {
+        color: #6c757d;
+        background-color: #f8f9fa;
+        transition: all 0.2s ease;
+        text-decoration: none; /* Xóa gạch chân */
+    }
+    
+    .pagination .page-link:hover {
+        background-color: #e9ecef;
+        color: #0d6efd;
+        transform: translateY(-1px);
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #0d6efd;
+        color: #ffffff;
+        box-shadow: 0 2px 5px rgba(13, 110, 253, 0.3);
+    }
+    
+    .pagination .page-item.disabled .page-link {
+        color: #adb5bd;
+        background-color: transparent;
+        cursor: default;
+    }
+</style>

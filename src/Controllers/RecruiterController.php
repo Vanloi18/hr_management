@@ -19,16 +19,37 @@ class RecruiterController extends Controller
     public function index()
     {
         $this->requireAdmin();
-        $recruiters = $this->recruiterModel->all();
 
+        // 1. Lấy tham số tìm kiếm và phân trang
+        $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
+        $page    = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($page < 1) $page = 1;
+
+        $limit   = 10; 
+        $offset  = ($page - 1) * $limit;
+
+        // 2. Lấy dữ liệu từ Model
+        $recruiters = $this->recruiterModel->getPaginated($keyword, $limit, $offset);
+        $totalRecords = $this->recruiterModel->countAll($keyword);
+        $totalPages = ceil($totalRecords / $limit);
+
+        // 3. Chuẩn bị dữ liệu
         $data = [
-            'title' => 'Quản lý Nhà tuyển dụng',
-            'recruiters' => $recruiters
+            'title'        => 'Quản lý Nhà tuyển dụng',
+            'recruiters'   => $recruiters,
+            'currentPage'  => $page,
+            'totalPages'   => $totalPages,
+            'totalRecords' => $totalRecords,
+            'keyword'      => $keyword
         ];
+
 
         if (isAjaxRequest()) {
             return partial('recruiters/index', $data);
         }
+        // --------------------------------------
+
+        // Nếu load trực tiếp từ thanh địa chỉ trình duyệt, trả về full view (có layout)
         return view('recruiters/index', $data);
     }
 

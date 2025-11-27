@@ -89,4 +89,78 @@ class Employee extends Model
     {
         return $this->db->query("DELETE FROM employees WHERE id = :id", ['id' => $id]);
     }
+
+    /**
+     * Lấy danh sách nhân viên: Có Phân trang + Tìm kiếm + Lọc Phòng ban
+     */
+    public function getPaginated($keyword = '', $status = '', $department_id = '', $limit = 10, $offset = 0)
+    {
+        // JOIN bảng departments để lấy tên phòng ban
+        $sql = "SELECT e.*, d.name as department_name 
+                FROM employees e 
+                LEFT JOIN departments d ON e.department_id = d.id 
+                WHERE 1=1";
+        
+        $params = [];
+
+        // 1. Tìm kiếm (Tên, Email, Mã NV)
+        if (!empty($keyword)) {
+            $sql .= " AND (e.full_name LIKE ? OR e.email LIKE ? OR e.id LIKE ?)";
+            $keywordParam = "%$keyword%";
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+        }
+
+        // 2. Lọc theo Trạng thái
+        if (!empty($status)) {
+            $sql .= " AND e.status = ?";
+            $params[] = $status;
+        }
+
+        // 3. Lọc theo Phòng ban
+        if (!empty($department_id)) {
+            $sql .= " AND e.department_id = ?";
+            $params[] = $department_id;
+        }
+
+        $sql .= " ORDER BY e.id DESC LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
+
+        return $this->db->query($sql, $params)->fetchAll();
+    }
+
+    /**
+     * Đếm tổng số bản ghi
+     */
+    public function countAll($keyword = '', $status = '', $department_id = '')
+    {
+        $sql = "SELECT COUNT(*) as total FROM employees e WHERE 1=1";
+        $params = [];
+
+        if (!empty($keyword)) {
+            $sql .= " AND (e.full_name LIKE ? OR e.email LIKE ? OR e.id LIKE ?)";
+            $keywordParam = "%$keyword%";
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+        }
+
+        if (!empty($status)) {
+            $sql .= " AND e.status = ?";
+            $params[] = $status;
+        }
+
+        if (!empty($department_id)) {
+            $sql .= " AND e.department_id = ?";
+            $params[] = $department_id;
+        }
+
+        $result = $this->db->query($sql, $params)->fetch();
+        return $result ? (int)$result['total'] : 0;
+    }
+    
+    // Hàm phụ để lấy danh sách phòng ban cho Dropdown lọc
+    public function getDepartments() {
+        return $this->db->query("SELECT id, name FROM departments ORDER BY name ASC")->fetchAll();
+    }
 }

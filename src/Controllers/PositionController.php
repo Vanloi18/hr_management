@@ -21,16 +21,43 @@ class PositionController extends Controller
     public function index()
     {
         $this->checkAuthentication();
-        $positions = $this->positionModel->allWithDetails();
 
+        // 1. Lấy tham số filter
+        $keyword      = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
+        $status       = isset($_GET['status']) ? trim($_GET['status']) : '';
+        $recruiter_id = isset($_GET['recruiter_id']) ? trim($_GET['recruiter_id']) : '';
+        $page         = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($page < 1) $page = 1;
+
+        $limit  = 10;
+        $offset = ($page - 1) * $limit;
+
+        // 2. Lấy dữ liệu
+        $positions = $this->positionModel->getPaginated($keyword, $status, $recruiter_id, $limit, $offset);
+        $totalRecords = $this->positionModel->countAll($keyword, $status, $recruiter_id);
+        $totalPages = ceil($totalRecords / $limit);
+        
+        // Lấy danh sách công ty để hiển thị dropdown lọc
+        $recruitersList = $this->positionModel->getRecruitersList();
+
+        // 3. Đóng gói dữ liệu
         $data = [
-            'title' => 'Quản lý Vị trí Tuyển dụng',
-            'positions' => $positions
+            'title'          => 'Quản lý Tin tuyển dụng',
+            'positions'      => $positions,
+            'recruitersList' => $recruitersList, // Truyền list công ty sang view
+            'currentPage'    => $page,
+            'totalPages'     => $totalPages,
+            'totalRecords'   => $totalRecords,
+            'keyword'        => $keyword,
+            'status'         => $status,
+            'recruiter_id'   => $recruiter_id
         ];
 
+        // 4. Xử lý AJAX (Chống lỗi lồng layout)
         if (isAjaxRequest()) {
             return partial('positions/index', $data);
         }
+
         return view('positions/index', $data);
     }
 

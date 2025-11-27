@@ -22,17 +22,43 @@ class EmployeeController extends Controller
 
     public function index()
     {
-        $this->checkAuthentication();
-        $employees = $this->employeeModel->allWithDetails();
-        
+        $this->requireAdmin(); 
+
+        // 1. Lấy tham số từ URL
+        $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
+        $status  = isset($_GET['status']) ? trim($_GET['status']) : '';
+        $dept_id = isset($_GET['department_id']) ? trim($_GET['department_id']) : '';
+        $page    = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($page < 1) $page = 1;
+
+        $limit   = 10;
+        $offset  = ($page - 1) * $limit;
+
+        // 2. Gọi Model
+        $employees = $this->employeeModel->getPaginated($keyword, $status, $dept_id, $limit, $offset);
+        $totalRecords = $this->employeeModel->countAll($keyword, $status, $dept_id);
+        $departments = $this->employeeModel->getDepartments(); // Lấy list phòng ban để làm filter
+
+        $totalPages = ceil($totalRecords / $limit);
+
+        // 3. Chuẩn bị dữ liệu
         $data = [
-            'title' => 'Quản lý Nhân viên',
-            'employees' => $employees
+            'title'        => 'Quản lý Nhân viên',
+            'employees'    => $employees,
+            'departments'  => $departments,
+            'currentPage'  => $page,
+            'totalPages'   => $totalPages,
+            'totalRecords' => $totalRecords,
+            'keyword'      => $keyword,
+            'status'       => $status,
+            'department_id'=> $dept_id
         ];
 
+        // 4. Xử lý AJAX (Tránh lỗi lồng giao diện)
         if (isAjaxRequest()) {
             return partial('employees/index', $data);
         }
+
         return view('employees/index', $data);
     }
 

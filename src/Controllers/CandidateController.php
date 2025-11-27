@@ -24,27 +24,44 @@ class CandidateController extends Controller
     public function index()
     {
         $this->checkAuthentication();
-        $search = trim($_GET['search'] ?? null);
-        define('ITEMS_PER_PAGE', 10);
-        $currentPage = (int)($_GET['page'] ?? 1);
-        if ($currentPage < 1) $currentPage = 1;
-        $offset = ($currentPage - 1) * ITEMS_PER_PAGE;
 
-        $totalCandidates = $this->candidateModel->countAll($search);
-        $totalPages = ceil($totalCandidates / ITEMS_PER_PAGE);
-        $candidates = $this->candidateModel->allWithDetails($search, ITEMS_PER_PAGE, $offset);
+        // 1. Lấy tham số filter từ URL
+        // Lưu ý: Đổi 'search' thành 'keyword' để đồng bộ với các trang khác
+        $keyword     = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
+        $status      = isset($_GET['status']) ? trim($_GET['status']) : '';
+        $position_id = isset($_GET['position_id']) ? trim($_GET['position_id']) : '';
+        $page        = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($page < 1) $page = 1;
 
-        $data = [
-            'title' => 'Quản lý Ứng viên (CVs)',
-            'candidates' => $candidates,
-            'totalPages' => $totalPages,
-            'currentPage' => $currentPage,
-            'search' => $search
-        ];
+        $limit  = 10;
+        $offset = ($page - 1) * $limit;
+
+        // 2. Lấy dữ liệu
+        $candidates = $this->candidateModel->getPaginated($keyword, $status, $position_id, $limit, $offset);
+        $totalRecords = $this->candidateModel->countAll($keyword, $status, $position_id);
+        $totalPages = ceil($totalRecords / $limit);
         
+        // Lấy list vị trí tuyển dụng cho dropdown filter
+        $positionsList = $this->candidateModel->getPositionsList();
+
+        // 3. Đóng gói dữ liệu
+        $data = [
+            'title'         => 'Quản lý Ứng viên',
+            'candidates'    => $candidates,
+            'positionsList' => $positionsList,
+            'currentPage'   => $page,
+            'totalPages'    => $totalPages,
+            'totalRecords'  => $totalRecords,
+            'keyword'       => $keyword,
+            'status'        => $status,
+            'position_id'   => $position_id
+        ];
+
+        // 4. Xử lý AJAX
         if (isAjaxRequest()) {
             return partial('candidates/index', $data);
         }
+
         return view('candidates/index', $data);
     }
 

@@ -57,7 +57,46 @@ class Recruiter extends Model
             ]
         );
     }
+    public function getPaginated($keyword = '', $limit = 10, $offset = 0)
+    {
+        // Câu lệnh SQL lấy dữ liệu từ bảng recruiters
+        $sql = "SELECT * FROM recruiters WHERE 1=1";
+        $params = [];
 
+        if (!empty($keyword)) {
+            // SỬA LỖI Ở ĐÂY: dùng contact_person thay vì contact_name
+            $sql .= " AND (company_name LIKE ? OR contact_person LIKE ? OR email LIKE ?)";
+            $keywordParam = "%$keyword%";
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+        }
+
+        $sql .= " ORDER BY id DESC LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
+
+        return $this->db->query($sql, $params)->fetchAll();
+    }
+
+    /**
+     * Đếm tổng số bản ghi để tính trang
+     */
+    public function countAll($keyword = '')
+    {
+        $sql = "SELECT COUNT(*) as total FROM recruiters WHERE 1=1";
+        $params = [];
+
+        if (!empty($keyword)) {
+            // SỬA LỖI Ở ĐÂY: dùng contact_person
+            $sql .= " AND (company_name LIKE ? OR contact_person LIKE ? OR email LIKE ?)";
+            $keywordParam = "%$keyword%";
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+        }
+
+        $result = $this->db->query($sql, $params)->fetch();
+        return $result ? (int)$result['total'] : 0;
+    }
     public function delete($id)
     {
         return $this->db->query("DELETE FROM recruiters WHERE id = :id", ['id' => $id]);

@@ -1,10 +1,10 @@
 <?php 
     session_start();
-    // 🔥 TẠO CSRF TOKEN (Nếu chưa tồn tại)
+    // 1. TẠO CSRF TOKEN (Bảo mật form)
     if (empty($_SESSION['csrf_token'])) {
-    // Tạo một chuỗi ngẫu nhiên, an toàn
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
+
     require __DIR__ . '/../vendor/autoload.php';
     require __DIR__ . '/../config.php';
     require BASE_PATH . 'src/Core/functions.php';
@@ -15,12 +15,12 @@
     $router->get('/logout', 'AuthController@logout');
 
     // ----- Routes cho Quản lý Nhân viên (chỉ Admin) -----
-    $router->get('/users', 'UserController@index');       // Trang danh sách
-    $router->get('/users/create', 'UserController@create'); // Form thêm mới
-    $router->post('/users', 'UserController@store');      // Xử lý lưu (từ form thêm)
-    $router->get('/users/edit', 'UserController@edit');   // Form sửa (lấy ?id=)
-    $router->post('/users/update', 'UserController@update'); // Xử lý cập nhật
-    $router->post('/users/delete', 'UserController@destroy'); // Xử lý xóa
+    $router->get('/users', 'UserController@index');       
+    $router->get('/users/create', 'UserController@create');
+    $router->post('/users', 'UserController@store');      
+    $router->get('/users/edit', 'UserController@edit');   
+    $router->post('/users/update', 'UserController@update');
+    $router->post('/users/delete', 'UserController@destroy');
 
     // ----- Routes cho Quản lý Phòng ban (Admin & HR) -----
     $router->get('/departments', 'DepartmentController@index');
@@ -31,12 +31,12 @@
     $router->post('/departments/delete', 'DepartmentController@destroy');
     
     // ----- Routes cho Quản lý Nhân viên (Admin & HR) -----
-$router->get('/employees', 'EmployeeController@index');
-$router->get('/employees/create', 'EmployeeController@create');
-$router->post('/employees', 'EmployeeController@store');
-$router->get('/employees/edit', 'EmployeeController@edit');
-$router->post('/employees/update', 'EmployeeController@update');
-$router->post('/employees/delete', 'EmployeeController@destroy');
+    $router->get('/employees', 'EmployeeController@index');
+    $router->get('/employees/create', 'EmployeeController@create');
+    $router->post('/employees', 'EmployeeController@store');
+    $router->get('/employees/edit', 'EmployeeController@edit');
+    $router->post('/employees/update', 'EmployeeController@update');
+    $router->post('/employees/delete', 'EmployeeController@destroy');
 
     // ----- Routes cho Quản lý Nhà tuyển dụng (Admin & HR) -----
     $router->get('/recruiters', 'RecruiterController@index');
@@ -79,16 +79,15 @@ $router->post('/employees/delete', 'EmployeeController@destroy');
     // 6. Lấy URI và Method từ request
     $uri = '/' . ($_GET['uri'] ?? '');
 
-    // Xóa dấu / ở cuối (nếu có), trừ trang chủ
+
     if (strlen($uri) > 1) {
         $uri = rtrim($uri, '/');
     }
     $method = $_POST['_method'] ?? $_SERVER['REQUEST_METHOD'];
-    // 🔥 BƯỚC 3: KIỂM TRA CSRF TOKEN TỰ ĐỘNG
-    // Chỉ kiểm tra các request "thay đổi dữ liệu" (POST)
+
     if ($method === 'POST') {
         try {
-            validate_csrf(); // Gọi hàm helper chúng ta vừa tạo
+            validate_csrf();
         } catch (\Exception $e) {
             // Nếu token lỗi, dừng ứng dụng ngay lập tức
             http_response_code(403); // 403 Forbidden
@@ -108,14 +107,11 @@ $router->post('/employees/delete', 'EmployeeController@destroy');
         http_response_code(404);
         echo "404 - Page Not Found";
     } catch (\App\Core\Exceptions\UnauthorizedException $e) {
-        // Xử lý khi người dùng không có quyền (403)
-        // Sẽ được dùng bởi hàm authorize()
         http_response_code(403);
         flash('error', $e->getMessage()); // Hiển thị lỗi
         redirect('/login'); // Đưa về trang login
     } catch (\Exception $e) {
-        // Xuẩt lỗi chung
         http_response_code(500);
-        echo "500 - Server Error: " . $e->getMessage();
+        echo "<h1>500 - Lỗi Server</h1><p>" . $e->getMessage() . "</p>";
     }
 ?>
