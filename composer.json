@@ -1,0 +1,17 @@
+{
+    "name": "levan/hr_management",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Vanloi18",
+            "email": "levanloi11nmt@gmail.com"
+        }
+    ],
+    "require": {
+        "fakerphp/faker": "^1.24"
+    }
+}

@@ -1,0 +1,327 @@
+/* --- BIẾN MÀU (DÙNG CHO SIDEBAR DARK MODE "KÍNH MỜ") --- */
+:root {
+    --apple-widget-bg: rgba(28, 28, 30, 0.85);
+    /* Nền đen mờ (Core) */
+    --apple-widget-border: rgba(80, 80, 80, 0.5);
+    /* Viền mỏng, mờ */
+    --apple-text-primary: #ffffff;
+    /* Chữ chính (Trắng) */
+    --apple-text-secondary: #a0a0a5;
+    /* Chữ phụ (Xám nhạt) */
+    --apple-link-blue: #007aff;
+    /* Xanh dương */
+    --apple-active-bg: rgba(0, 122, 255, 0.25);
+    /* Nền active xanh mờ */
+    --apple-hover-bg: rgba(255, 255, 255, 0.1);
+    /* Nền hover trắng mờ */
+}
+
+
+/* --- CSS GỐC TỪ MASTER.VIEW.PHP (Giữ nguyên) --- */
+body {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.wrapper {
+    display: flex;
+    flex-grow: 1;
+}
+
+.main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.content {
+    padding: 2rem;
+    flex-grow: 1;
+}
+
+.footer {
+    padding: 1rem;
+    background-color: #ffffff;
+    border-top: 1px solid #dee2e6;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.topbar {
+    flex-shrink: 0;
+    background-color: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+/* --- SIDEBAR (Phong cách Apple Dashboard - Kính mờ) --- */
+
+.sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    color: var(--apple-text-primary);
+    /* Chữ trắng */
+    padding: 1rem;
+    transition: all 0.3s;
+    box-shadow: none;
+
+    /* 🔥 HIỆU ỨNG KÍNH MỜ CỐT LÕI */
+    background-color: var(--apple-widget-bg);
+    /* Nền đen trong suốt */
+    backdrop-filter: blur(16px);
+    /* LÀM MỜ NỀN PHÍA SAU */
+    -webkit-backdrop-filter: blur(16px);
+    /* Hỗ trợ Safari */
+    border-right: 1px solid var(--apple-widget-border);
+    /* Viền mờ */
+}
+
+.sidebar-brand {
+    font-size: 1.4rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--apple-text-primary);
+    /* Chữ trắng */
+    display: block;
+    text-align: center;
+    padding-bottom: 1rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--apple-widget-border);
+    /* Viền mờ */
+}
+
+.sidebar .nav-link {
+    border-radius: 8px;
+    margin-bottom: 0.25rem;
+    color: var(--apple-text-secondary);
+    /* Chữ xám nhạt (Phụ) */
+    transition: background-color 0.2s, color 0.2s;
+    font-weight: 500;
+    padding: 0.6rem 0.75rem;
+    margin-left: 0.25rem;
+    margin-right: 0.25rem;
+}
+
+/* Hiệu ứng khi rê chuột (hover) */
+.sidebar .nav-link:not(.active):hover {
+    background-color: var(--apple-hover-bg);
+    /* Nền trắng mờ */
+    color: var(--apple-text-primary);
+    /* Chữ trắng (Chính) */
+}
+
+/* Trạng thái Active (đang chọn) */
+.sidebar .nav-link.active {
+    background-color: var(--apple-active-bg);
+    /* Nền xanh mờ */
+    color: var(--apple-link-blue);
+    /* Chữ xanh */
+    font-weight: 600;
+    box-shadow: none;
+}
+
+/* Icon */
+.sidebar .nav-link .bi {
+    margin-right: 0.75rem;
+    width: 20px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+/* Mũi tên (Giữ nguyên) */
+.sidebar .nav-link .ms-auto {
+    transition: transform 0.3s;
+}
+
+.sidebar .nav-link[data-bs-toggle="collapse"][aria-expanded="true"] .ms-auto {
+    transform: rotate(180deg);
+}
+
+/* Menu con (Sub-menu) */
+.sidebar .collapse .nav-link {
+    font-size: 0.9rem;
+    padding-left: 2.75rem;
+    background: none;
+    color: var(--apple-text-secondary);
+    /* Xám nhạt */
+    font-weight: 400;
+}
+
+.sidebar .collapse .nav-link.active {
+    background-color: transparent;
+    color: var(--apple-link-blue);
+    /* Chữ xanh */
+    font-weight: 600;
+    box-shadow: none;
+}
+
+/* Hover menu con */
+.sidebar .collapse .nav-link:not(.active):hover {
+    background-color: transparent;
+    color: var(--apple-text-primary);
+    /* Chuyển sang trắng khi hover */
+}
+
+/* Tiêu đề nhóm (ADMIN, BUSINESS) */
+.sidebar .nav-link-header {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    padding-top: 0.5rem;
+    padding-bottom: 0;
+    color: #888;
+    /* Màu xám cho tiêu đề nhóm */
+    padding-left: 0.75rem;
+    font-weight: 500;
+}
+
+<style>
+
+/* Modern Footer Styles */
+.footer {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-top: 1px solid #e2e8f0;
+    padding: 1.5rem 0;
+    margin-left: 280px;
+    margin-top: auto;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.02);
+    transition: margin-left 0.3s ease;
+}
+
+.footer .container-fluid {
+    padding: 0 2rem;
+}
+
+.footer-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+
+.footer-mobile {
+    display: none;
+}
+
+/* Footer Sections */
+.footer-left,
+.footer-center,
+.footer-right {
+    display: flex;
+    align-items: center;
+}
+
+.footer-brand {
+    color: #1e293b;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.footer-brand i {
+    font-size: 1.25rem;
+    color: #3b82f6;
+}
+
+.footer-brand strong {
+    font-weight: 600;
+}
+
+.footer-copyright {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.footer-developer {
+    color: #64748b;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+}
+
+.footer-developer i {
+    color: #8b5cf6;
+}
+
+.developer-name {
+    color: #3b82f6;
+    font-weight: 600;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Hover Effects */
+.developer-name {
+    position: relative;
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+.developer-name:hover {
+    transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .footer {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .footer-content {
+        display: none;
+    }
+
+    .footer-mobile {
+        display: block;
+    }
+
+    .footer {
+        padding: 1.25rem 0;
+    }
+
+    .footer-brand,
+    .footer-copyright,
+    .footer-developer {
+        font-size: 0.85rem;
+    }
+}
+
+/* Dark Mode Support (Optional) */
+@media (prefers-color-scheme: dark) {
+    .footer {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-top-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .footer-brand {
+        color: #e2e8f0;
+    }
+
+    .footer-copyright,
+    .footer-developer {
+        color: #94a3b8;
+    }
+}
+
+/* Animation */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.footer {
+    animation: slideUp 0.4s ease;
+}
+
+</style>

@@ -1,0 +1,66 @@
+/*
+ * CSS tùy chỉnh cho trang Đăng nhập
+ * Toàn bộ code này được chuyển từ <style> trong login.view.php
+ */
+
+body {
+    /* Màu nền xám-xanh nhạt */
+    background-color: #f0f2f5; 
+    display: flex;
+    align-items: center;      /* Căn giữa theo chiều dọc */
+    justify-content: center; /* Căn giữa theo chiều ngang */
+    min-height: 100vh;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 450px; /* Giới hạn độ rộng của thẻ Card */
+    border: none;
+    border-radius: 1rem; /* Bo góc 16px */
+    /* Đổ bóng "mềm" */
+    box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1); 
+}
+
+/* Icon User ở trên cùng */
+.login-icon {
+    font-size: 3rem;
+    color: #6610f2; /* Màu tím */
+    background-color: #f3e9ff; /* Màu tím nhạt */
+    border-radius: 50%; /* Biến thành hình tròn */
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem auto; /* Tự động căn giữa */
+}
+
+/* Tùy chỉnh cho Input Group (icon nằm bên trong) */
+.input-group-text {
+    background-color: #fff;
+    border-right: 0;
+    /* Bo góc trái */
+    border-radius: 0.5rem 0 0 0.5rem; 
+}
+.form-control {
+    border-left: 0;
+    /* Bo góc phải */
+    border-radius: 0 0.5rem 0.5rem 0; 
+    padding: 0.75rem; /* Input cao hơn một chút */
+}
+.form-control:focus {
+    box-shadow: none; /* Tắt viền xanh (shadow) khi focus */
+    border-color: #ced4da; /* Giữ màu viền xám */
+}
+
+/* Nút bấm */
+.btn-primary {
+    background-color: #6610f2; /* Màu tím */
+    border: none;
+    padding: 0.75rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+}
+.btn-primary:hover {
+    background-color: #520dc2; /* Tím đậm hơn khi hover */
+}
