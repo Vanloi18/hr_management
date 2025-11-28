@@ -1,5 +1,7 @@
 <?php 
+
     session_start();
+    
     // 1. TẠO CSRF TOKEN (Bảo mật form)
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -33,6 +35,7 @@
     $router->get('/departments/edit', 'DepartmentController@edit');
     $router->post('/departments/update', 'DepartmentController@update');
     $router->post('/departments/delete', 'DepartmentController@destroy');
+    $router->get('/departments/employees', 'DepartmentController@apiGetEmployees');
     
     // ----- Routes cho Quản lý Nhân viên (Admin & HR) -----
     $router->get('/employees', 'EmployeeController@index');

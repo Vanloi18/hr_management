@@ -9,7 +9,6 @@ unset($_SESSION['_flash']['errors'], $_SESSION['_flash']['old']);
         <div class="col-lg-8">
             <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
                 
-                <!-- Card Header với gradient -->
                 <div class="card-header border-0 py-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                     <div class="d-flex align-items-center">
                         <div class="icon-box bg-white bg-opacity-25 rounded-3 p-3 me-3">
@@ -24,7 +23,6 @@ unset($_SESSION['_flash']['errors'], $_SESSION['_flash']['old']);
 
                 <div class="card-body p-4 p-md-5">
                 
-                    <!-- Hiển thị lỗi với style đẹp -->
                     <?php if (!empty($errors)): ?>
                         <div class="alert alert-danger border-0 rounded-3 shadow-sm" role="alert">
                             <div class="d-flex align-items-start">
@@ -138,10 +136,8 @@ unset($_SESSION['_flash']['errors'], $_SESSION['_flash']['old']);
                             </div>
                         </div>
 
-                        <!-- Divider -->
                         <hr class="my-4">
 
-                        <!-- Action Buttons -->
                         <div class="d-flex gap-3 justify-content-end">
                             <a href="<?php echo BASE_URL; ?>/users" class="btn btn-lg btn-light border rounded-pill px-4 shadow-sm">
                                 <i class="bi bi-x-circle me-2"></i>Hủy
@@ -158,7 +154,6 @@ unset($_SESSION['_flash']['errors'], $_SESSION['_flash']['old']);
 </div>
 
 <style>
-    /* Custom styles cho form */
     .form-control:focus,
     .form-select:focus {
         border-color: #667eea;
@@ -200,7 +195,6 @@ unset($_SESSION['_flash']['errors'], $_SESSION['_flash']['old']);
 </style>
 
 <script>
-    // Toggle hiển thị mật khẩu
     function togglePassword(fieldId) {
         const field = document.getElementById(fieldId);
         const icon = document.getElementById(fieldId + '-icon');

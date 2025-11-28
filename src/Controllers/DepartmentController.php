@@ -4,16 +4,20 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\Department;
-use App\Core\Validator; // <-- Import Validator
+use App\Core\Validator; 
+use App\Models\Employee;
 
 class DepartmentController extends Controller
 {
     protected $departmentModel;
+    protected $employeeModel;
+
 
     public function __construct()
     {
         parent::__construct();
         $this->departmentModel = new Department();
+        $this->employeeModel = new Employee();
     }
 
     public function index()
@@ -233,5 +237,34 @@ class DepartmentController extends Controller
             ]);
             exit();
         }
+    }
+
+    public function apiGetEmployees()
+    {
+        $this->checkAuthentication(); 
+        header('Content-Type: application/json');
+        
+        $departmentId = $_GET['id'] ?? null;
+
+        if (!$departmentId || !is_numeric($departmentId)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Thiếu ID Phòng ban hợp lệ.']);
+            exit;
+        }
+
+        try {
+            $employees = $this->employeeModel->getByDepartmentId($departmentId);
+            $department = $this->departmentModel->find($departmentId);
+            
+            echo json_encode([
+                'success' => true,
+                'department_name' => $department['name'] ?? 'Không rõ',
+                'employees' => $employees
+            ]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Lỗi server.']);
+        }
+        exit;
     }
 }

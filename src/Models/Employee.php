@@ -129,9 +129,6 @@ class Employee extends Model
         return $this->db->query($sql, $params)->fetchAll();
     }
 
-    /**
-     * Đếm tổng số bản ghi
-     */
     public function countAll($keyword = '', $status = '', $department_id = '')
     {
         $sql = "SELECT COUNT(*) as total FROM employees e WHERE 1=1";
@@ -158,8 +155,14 @@ class Employee extends Model
         $result = $this->db->query($sql, $params)->fetch();
         return $result ? (int)$result['total'] : 0;
     }
-    
-    // Hàm phụ để lấy danh sách phòng ban cho Dropdown lọc
+
+    public function getByDepartmentId($departmentId)
+{
+    // Lấy id, full_name, created_at theo yêu cầu
+    $sql = "SELECT id, full_name, created_at FROM employees WHERE department_id = :department_id ORDER BY full_name ASC";
+    return $this->db->query($sql, ['department_id' => $departmentId])->fetchAll();
+}
+
     public function getDepartments() {
         return $this->db->query("SELECT id, name FROM departments ORDER BY name ASC")->fetchAll();
     }

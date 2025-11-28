@@ -34,13 +34,21 @@
                         <tr>
                             <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small" style="width: 100px;">Mã PB</th>
                             <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small">Tên Phòng ban</th>
-                            <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small">Nhân sự</th> <th class="py-3 px-4 text-end text-secondary fw-semibold text-uppercase small" style="width: 150px;">Hành động</th>
+                            <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small">Nhân sự</th>
+                            <th class="py-3 px-4 text-end text-secondary fw-semibold text-uppercase small" style="width: 150px;">Hành động</th>
                         </tr>
                     </thead>
 
                     <tbody>
                         <?php foreach ($departments as $department): ?>
-                            <tr id="row-department-<?php echo e($department['id']); ?>" class="border-bottom-dashed">
+                            <tr id="row-department-<?php echo e($department['id']); ?>" 
+                                class="border-bottom-dashed"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#employeesModal"
+                                data-department-id="<?php echo e($department['id']); ?>" 
+                                data-department-name="<?php echo e($department['name']); ?>"
+                                style="cursor: pointer;">
+                                
                                 <td class="px-4 py-3">
                                     <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-10 px-3 py-2 rounded-pill font-monospace">
                                         #<?php echo e($department['id']); ?>
@@ -54,7 +62,7 @@
                                             <?php echo strtoupper(mb_substr($department['name'], 0, 2)); ?>
                                         </div>
                                         <div>
-                                            <span class="fw-bold text-dark d-block" style="font-size: 1rem;">
+                                            <span class="fw-bold text-dark d-block text-decoration-none hover-primary" style="font-size: 1rem;">
                                                 <?php echo e($department['name']); ?>
                                             </span>
                                             <?php if (!empty($department['description'])): ?>
@@ -129,16 +137,120 @@
     </div>
 </div>
 
+<div class="modal fade" id="employeesModal" tabindex="-1" aria-labelledby="employeesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content rounded-4 shadow-lg border-0">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark" id="employeesModalLabel">
+                    Nhân viên thuộc Phòng ban: <span id="department-name-title" class="text-primary"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle mb-0" style="font-size: 0.9rem;">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="py-2 px-3 text-secondary fw-semibold small">ID</th>
+                                <th class="py-2 px-3 text-secondary fw-semibold small">Họ tên</th>
+                                <th class="py-2 px-3 text-secondary fw-semibold small">Ngày tạo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employees-list-body">
+                            </tbody>
+                    </table>
+                </div>
+                <div id="loading-spinner" class="text-center py-5 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Đang tải...</span>
+                    </div>
+                    <p class="text-muted small mt-2">Đang tải danh sách nhân viên...</p>
+                </div>
+                <div id="no-employees-message" class="text-center py-5 d-none">
+                    <i class="bi bi-person-slash text-secondary" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3 mb-0 fw-medium">Phòng ban này hiện chưa có nhân viên nào.</p>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <style>
-    .table-hover tbody tr:hover { background-color: rgba(0,0,0,0.015); }
+    .table-hover tbody tr:hover { background-color: rgba(0,0,0,0.025); } /* Làm nổi bật hơn khi click */
     .border-bottom-dashed { border-bottom: 1px dashed #dee2e6 !important; }
     .btn-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
     .btn-icon:hover { transform: scale(1.1); filter: brightness(0.95); background-color: #e9ecef; }
+    /* Thêm style để người dùng biết có thể click */
+    .table-hover tbody tr:hover { 
+        cursor: pointer;
+        background-color: #f8f9fa;
+    }
 </style>
 
 <script>
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
+  // Logic AJAX cho Modal
+var employeesModal = document.getElementById('employeesModal');
+employeesModal.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget; 
+    
+    var departmentId = button.getAttribute('data-department-id');
+    var departmentName = button.getAttribute('data-department-name');
+    
+    // Các phần tử DOM cần thao tác
+    var modalTitle = document.getElementById('department-name-title');
+    var employeeListBody = document.getElementById('employees-list-body');
+    var loadingSpinner = document.getElementById('loading-spinner');
+    var noEmployeesMessage = document.getElementById('no-employees-message');
+    
+    // Reset trạng thái và hiển thị loading
+    modalTitle.textContent = departmentName;
+    employeeListBody.innerHTML = '';
+    noEmployeesMessage.classList.add('d-none');
+    loadingSpinner.classList.remove('d-none');
+
+    // 2. Gọi AJAX để lấy dữ liệu nhân viên
+    fetch(`<?php echo BASE_URL; ?>/departments/employees?id=${departmentId}`)
+        .then(response => {
+            if (!response.ok) {
+                // Nếu lỗi 403 (Forbidden) hoặc 404 (Not Found), ném ra lỗi với status code
+                throw new Error(`Lỗi HTTP ${response.status}: API truy cập thất bại.`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            loadingSpinner.classList.add('d-none');
+            
+            if (data.success && data.employees && data.employees.length > 0) {
+                // 3. Hiển thị dữ liệu
+                data.employees.forEach(employee => {
+                    const row = employeeListBody.insertRow();
+                    
+                    const idCell = row.insertCell();
+                    idCell.innerHTML = `<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-10 px-2 py-1 rounded-pill font-monospace">#${employee.id}</span>`;
+                    
+                    const nameCell = row.insertCell();
+                    nameCell.textContent = employee.full_name;
+                    
+                    const dateCell = row.insertCell();
+                    const dateString = employee.created_at ? employee.created_at.substring(0, 10) : 'N/A';
+                    dateCell.textContent = dateString.split('-').reverse().join('/');
+                });
+            } else {
+                // 4. Không có nhân viên (hoặc data trả về rỗng)
+                noEmployeesMessage.classList.remove('d-none');
+            }
+        })
+        .catch(error => {
+            loadingSpinner.classList.add('d-none');
+            console.error('LỖI GỌI API:', error);
+            
+            // Hiển thị lỗi rõ ràng cho người dùng
+            noEmployeesMessage.classList.remove('d-none');
+            document.getElementById('no-employees-message').innerHTML = `<p class="text-danger mt-2 mb-0 fw-medium">${error.message}</p>`;
+        });
+});
 </script>

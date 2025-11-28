@@ -5,7 +5,7 @@
             <h4 class="fw-bold text-dark mb-1">Quản lý Nhân viên</h4>
             <p class="text-secondary small mb-0">Quản lý tài khoản và phân quyền hệ thống</p>
         </div>
-        </div>
+    </div>
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4">
             <div class="row g-3 align-items-center justify-content-between">
@@ -165,7 +165,6 @@
                         <ul class="pagination pagination-sm mb-0 gap-1">
                             <li class="page-item <?php echo ($currentPage <= 1) ? 'disabled' : ''; ?>">
                                 <?php
-                                    // Giữ lại các tham số search khi chuyển trang
                                     $prevParams = $_GET;
                                     $prevParams['page'] = $currentPage - 1;
                                     $prevUrl = BASE_URL . '/users?' . http_build_query($prevParams);
@@ -210,7 +209,6 @@
 </div>
 
 <style>
-    /* CSS Tùy chỉnh cho thẩm mỹ */
     .bg-danger-subtle { background-color: #fceceb !important; }
     .bg-primary-subtle { background-color: #ebf5ff !important; }
     .bg-success-subtle { background-color: #e6f6ec !important; }
@@ -240,8 +238,7 @@
         object-fit: cover;
     }
     
-    /* Style riêng cho Pagination Active */
-    .pagination .page-item.active .page-link {
+        .pagination .page-item.active .page-link {
         background-color: #0d6efd;
         border-color: #0d6efd;
         color: white !important;
@@ -255,8 +252,7 @@
         return new bootstrap.Tooltip(tooltipTriggerEl)
     })
 
-    // Xử lý nút xóa AJAX (để trang không bị load lại)
-    document.querySelectorAll('.btn-delete-user').forEach(button => {
+        document.querySelectorAll('.btn-delete-user').forEach(button => {
         button.addEventListener('click', function() {
             if(!confirm('Bạn có chắc chắn muốn xóa user này không?')) return;
             
@@ -274,7 +270,6 @@
             .then(data => {
                 if(data.success) {
                     row.remove();
-                    // Có thể thêm logic cập nhật lại số lượng hiển thị ở đây nếu muốn
                     alert(data.message);
                 } else {
                     alert(data.message);

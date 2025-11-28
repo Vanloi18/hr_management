@@ -1,5 +1,4 @@
 <?php 
-// $title và $user được set từ Controller
 $errors = $_SESSION['_flash']['errors'] ?? [];
 unset($_SESSION['_flash']['errors']); 
 ?>
@@ -8,8 +7,7 @@ unset($_SESSION['_flash']['errors']);
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
-                
-                <!-- Card Header với gradient -->
+
                 <div class="card-header border-0 py-4" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                     <div class="d-flex align-items-center">
                         <div class="icon-box bg-white bg-opacity-25 rounded-3 p-3 me-3">
@@ -29,8 +27,7 @@ unset($_SESSION['_flash']['errors']);
                 </div>
 
                 <div class="card-body p-4 p-md-5">
-                
-                    <!-- Hiển thị lỗi với style đẹp -->
+
                     <?php if (!empty($errors)): ?>
                         <div class="alert alert-danger border-0 rounded-3 shadow-sm" role="alert">
                             <div class="d-flex align-items-start">
@@ -51,14 +48,12 @@ unset($_SESSION['_flash']['errors']);
                         <?php csrf_field(); ?>
                         <input type="hidden" name="id" value="<?php echo e($user['id']); ?>">
 
-                        <!-- Thông tin cơ bản -->
                         <div class="section-title mb-4">
                             <h5 class="fw-bold text-muted mb-3">
                                 <i class="bi bi-info-circle-fill me-2"></i>Thông tin cơ bản
                             </h5>
                         </div>
 
-                        <!-- Họ tên -->
                         <div class="mb-4">
                             <label for="full_name" class="form-label fw-semibold">
                                 <i class="bi bi-person text-danger me-2"></i>Họ tên
@@ -72,8 +67,7 @@ unset($_SESSION['_flash']['errors']);
                                    placeholder="Nhập họ và tên đầy đủ"
                                    required>
                         </div>
-                        
-                        <!-- Email -->
+
                         <div class="mb-4">
                             <label for="email" class="form-label fw-semibold">
                                 <i class="bi bi-envelope text-danger me-2"></i>Email
@@ -91,7 +85,6 @@ unset($_SESSION['_flash']['errors']);
                             </div>
                         </div>
 
-                        <!-- Vai trò -->
                         <div class="mb-4">
                             <label for="role" class="form-label fw-semibold">
                                 <i class="bi bi-shield-check text-danger me-2"></i>Vai trò
@@ -107,10 +100,8 @@ unset($_SESSION['_flash']['errors']);
                             </select>
                         </div>
 
-                        <!-- Divider cho phần mật khẩu -->
                         <hr class="my-4">
-                        
-                        <!-- Thay đổi mật khẩu -->
+
                         <div class="section-title mb-4">
                             <h5 class="fw-bold text-muted mb-2">
                                 <i class="bi bi-key-fill me-2"></i>Thay đổi mật khẩu
@@ -121,7 +112,6 @@ unset($_SESSION['_flash']['errors']);
                             </div>
                         </div>
 
-                        <!-- Mật khẩu mới -->
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label for="password" class="form-label fw-semibold">
@@ -162,7 +152,6 @@ unset($_SESSION['_flash']['errors']);
                             </div>
                         </div>
 
-                        <!-- Action Buttons -->
                         <div class="d-flex gap-3 justify-content-end mt-4">
                             <a href="<?php echo BASE_URL; ?>/users" 
                                class="btn btn-lg btn-light border rounded-pill px-4 shadow-sm">
@@ -177,7 +166,6 @@ unset($_SESSION['_flash']['errors']);
                     </form>
                 </div>
 
-                <!-- Card Footer -->
                 <div class="card-footer bg-light border-0 py-3">
                     <div class="d-flex justify-content-between align-items-center text-muted small">
                         <span>
