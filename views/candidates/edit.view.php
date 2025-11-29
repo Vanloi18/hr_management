@@ -9,7 +9,6 @@ unset($_SESSION['_flash']['errors']);
         <div class="col-lg-9">
             <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
                 
-                <!-- Card Header với gradient -->
                 <div class="card-header border-0 py-4" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                     <div class="d-flex align-items-center">
                         <div class="icon-box bg-white bg-opacity-50 rounded-3 p-3 me-3">
@@ -30,7 +29,6 @@ unset($_SESSION['_flash']['errors']);
 
                 <div class="card-body p-4 p-md-5">
                 
-                    <!-- Hiển thị lỗi -->
                     <?php if (!empty($errors)): ?>
                         <div class="alert alert-danger border-0 rounded-3 shadow-sm" role="alert">
                             <div class="d-flex align-items-start">
@@ -51,14 +49,12 @@ unset($_SESSION['_flash']['errors']);
                         <?php csrf_field(); ?>
                         <input type="hidden" name="id" value="<?php echo e($candidate['id']); ?>">
                         
-                        <!-- Thông tin cơ bản -->
                         <div class="section-title mb-4">
                             <h5 class="fw-bold text-muted mb-3">
                                 <i class="bi bi-person-circle text-info me-2"></i>Thông tin Ứng viên
                             </h5>
                         </div>
 
-                        <!-- Vị trí ứng tuyển -->
                         <div class="mb-4">
                             <label for="position_id" class="form-label fw-semibold">
                                 <i class="bi bi-briefcase text-info me-2"></i>Vị trí ứng tuyển
@@ -77,7 +73,6 @@ unset($_SESSION['_flash']['errors']);
                             </select>
                         </div>
 
-                        <!-- Họ tên -->
                         <div class="mb-4">
                             <label for="full_name" class="form-label fw-semibold">
                                 <i class="bi bi-person text-info me-2"></i>Họ tên
@@ -92,7 +87,6 @@ unset($_SESSION['_flash']['errors']);
                                    required>
                         </div>
 
-                        <!-- Email & Phone -->
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label for="email" class="form-label fw-semibold">
@@ -122,17 +116,14 @@ unset($_SESSION['_flash']['errors']);
                             </div>
                         </div>
 
-                        <!-- Divider -->
                         <hr class="my-4">
 
-                        <!-- CV File Section -->
                         <div class="section-title mb-4">
                             <h5 class="fw-bold text-muted mb-3">
                                 <i class="bi bi-file-earmark-pdf text-danger me-2"></i>Quản lý CV
                             </h5>
                         </div>
 
-                        <!-- CV hiện tại -->
                         <div class="alert alert-info border-0 rounded-3 shadow-sm mb-4">
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-file-earmark-check-fill me-3 fs-4"></i>
@@ -150,7 +141,6 @@ unset($_SESSION['_flash']['errors']);
                             </div>
                         </div>
 
-                        <!-- Upload CV mới -->
                         <div class="mb-4">
                             <label for="cv_file" class="form-label fw-semibold">
                                 <i class="bi bi-cloud-upload text-danger me-2"></i>Thay thế file CV
@@ -166,17 +156,14 @@ unset($_SESSION['_flash']['errors']);
                             </div>
                         </div>
 
-                        <!-- Divider -->
                         <hr class="my-4">
 
-                        <!-- Trạng thái & Ghi chú -->
                         <div class="section-title mb-4">
                             <h5 class="fw-bold text-muted mb-3">
                                 <i class="bi bi-sliders text-warning me-2"></i>Trạng thái & Đánh giá
                             </h5>
                         </div>
 
-                        <!-- Trạng thái -->
                         <div class="mb-4">
                             <label for="status" class="form-label fw-semibold">
                                 <i class="bi bi-circle-fill text-warning me-2"></i>Trạng thái
@@ -201,8 +188,32 @@ unset($_SESSION['_flash']['errors']);
                                 <i class="bi bi-info-circle me-1"></i>Cập nhật trạng thái xử lý hồ sơ
                             </div>
                         </div>
-
-                        <!-- Ghi chú -->
+                        
+                        <div id="interview-section" 
+                             class="card p-4 mb-4 bg-light border-info border-opacity-25 shadow-sm" 
+                             style="display: none;">
+                            <h6 class="fw-bold text-info mb-3">
+                                <i class="bi bi-calendar-event me-2"></i>Chi tiết Lịch Phỏng vấn
+                            </h6>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted fw-bold">Ngày & Giờ Phỏng vấn</label>
+                                    <input type="datetime-local" 
+                                           name="interview_date" 
+                                           class="form-control form-control-lg rounded-3 shadow-sm" 
+                                           value="<?php echo !empty($candidate['interview_date']) ? date('Y-m-d\TH:i', strtotime($candidate['interview_date'])) : ''; ?>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted fw-bold">Địa điểm/Link Online</label>
+                                    <input type="text" 
+                                           name="interview_location" 
+                                           class="form-control form-control-lg rounded-3 shadow-sm" 
+                                           placeholder="Ví dụ: Văn phòng công ty, Google Meet link"
+                                           value="<?php echo e($candidate['interview_location'] ?? ''); ?>">
+                                </div>
+                            </div>
+                        </div>
                         <div class="mb-4">
                             <label for="notes" class="form-label fw-semibold">
                                 <i class="bi bi-pencil-square text-warning me-2"></i>Ghi chú & Đánh giá
@@ -217,10 +228,8 @@ unset($_SESSION['_flash']['errors']);
                             </div>
                         </div>
 
-                        <!-- Divider -->
                         <hr class="my-4">
 
-                        <!-- Action Buttons -->
                         <div class="d-flex gap-3 justify-content-end">
                             <a href="<?php echo BASE_URL; ?>/candidates" 
                                class="btn btn-lg btn-light border rounded-pill px-4 shadow-sm">
@@ -234,23 +243,8 @@ unset($_SESSION['_flash']['errors']);
                         </div>
                     </form>
                 </div>
-
-                <!-- Card Footer -->
-                <div class="card-footer bg-light border-0 py-3">
-                    <div class="d-flex justify-content-between align-items-center text-muted small flex-wrap gap-2">
-                        <span>
-                            <i class="bi bi-calendar3 me-1"></i>
-                            Nộp hồ sơ: <strong><?php echo date('d/m/Y H:i', strtotime($candidate['applied_at'])); ?></strong>
-                        </span>
-                        <span>
-                            <i class="bi bi-person-badge me-1"></i>
-                            ID: <strong>#<?php echo e($candidate['id']); ?></strong>
-                        </span>
-                    </div>
-                </div>
             </div>
 
-            <!-- Quick Actions Card -->
             <div class="card shadow border-0 rounded-4 mt-4">
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-3">
@@ -259,9 +253,10 @@ unset($_SESSION['_flash']['errors']);
                     <div class="d-flex flex-wrap gap-2">
                         <button type="button" 
                                 class="btn btn-outline-success btn-sm rounded-pill px-3"
-                                onclick="document.getElementById('status').value='interviewing'; document.querySelector('form').submit();">
+                                id="quick-interview-btn">
                             <i class="bi bi-chat-dots me-1"></i>Chuyển sang Phỏng vấn
                         </button>
+                        
                         <button type="button" 
                                 class="btn btn-outline-primary btn-sm rounded-pill px-3"
                                 onclick="document.getElementById('status').value='hired'; document.querySelector('form').submit();">
@@ -288,64 +283,61 @@ unset($_SESSION['_flash']['errors']);
 </div>
 
 <style>
-    .form-control:focus,
-    .form-select:focus {
-        border-color: #4facfe;
-        box-shadow: 0 0 0 0.25rem rgba(79, 172, 254, 0.25);
-    }
-    
-    .icon-box {
-        transition: transform 0.3s ease;
-    }
-    
-    .card:hover .icon-box {
-        transform: scale(1.1) rotate(-5deg);
-    }
-    
-    .btn {
-        transition: all 0.3s ease;
-    }
-    
-    .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
-    }
-    
-    .section-title h5 {
-        position: relative;
-        padding-bottom: 10px;
-    }
-    
-    .section-title h5::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 50px;
-        height: 3px;
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        border-radius: 2px;
-    }
-    
-    @media (max-width: 768px) {
-        .card-body {
-            padding: 1.5rem !important;
-        }
-        
-        .card-header .badge {
-            display: none;
-        }
-    }
+    /* CSS của bạn giữ nguyên */
+    .form-control:focus, .form-select:focus { border-color: #4facfe; box-shadow: 0 0 0 0.25rem rgba(79, 172, 254, 0.25); }
+    .icon-box { transition: transform 0.3s ease; }
+    .card:hover .icon-box { transform: scale(1.1) rotate(-5deg); }
+    .btn { transition: all 0.3s ease; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important; }
+    .section-title h5 { position: relative; padding-bottom: 10px; }
+    .section-title h5::after { content: ''; position: absolute; left: 0; bottom: 0; width: 50px; height: 3px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 2px; }
+    @media (max-width: 768px) { .card-body { padding: 1.5rem !important; } .card-header .badge { display: none; } }
 </style>
 
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const statusSelect = document.getElementById('status'); // Lấy select trạng thái
+        const interviewSection = document.getElementById('interview-section'); // Khu vực Phỏng vấn
+        const quickInterviewBtn = document.getElementById('quick-interview-btn'); // Nút quick action
+
+        // Hàm kiểm tra và hiển thị/ẩn
+        function toggleInterviewFields() {
+            if (statusSelect.value === 'interviewing') {
+                // Nếu chọn Phỏng vấn -> HIỂN THỊ
+                interviewSection.style.display = 'block';
+            } else {
+                // Nếu chọn trạng thái khác -> ẨN
+                interviewSection.style.display = 'none';
+            }
+        }
+
+        // 1. Lắng nghe sự kiện thay đổi trên dropdown
+        statusSelect.addEventListener('change', toggleInterviewFields);
+
+        // 2. Chạy lần đầu khi load trang (để giữ trạng thái nếu đang ở interviewing)
+        toggleInterviewFields();
+
+        // 3. XỬ LÝ NÚT QUICK ACTION: Chuyển sang Phỏng vấn
+        if (quickInterviewBtn) {
+            quickInterviewBtn.addEventListener('click', function() {
+                // Đổi giá trị dropdown thành 'interviewing'
+                statusSelect.value = 'interviewing';
+                
+                // Kích hoạt sự kiện 'change' để JS tự động hiện form Phỏng vấn
+                statusSelect.dispatchEvent(new Event('change'));
+                
+                // Cuộn nhẹ lên khu vực phỏng vấn để người dùng nhập ngày giờ
+                interviewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+    });
+    
     // File preview enhancement
     document.getElementById('cv_file').addEventListener('change', function(e) {
         if (this.files && this.files[0]) {
             const fileName = this.files[0].name;
             const fileSize = (this.files[0].size / 1024 / 1024).toFixed(2); // MB
             
-            // Show preview
             const preview = document.createElement('div');
             preview.className = 'alert alert-success border-0 rounded-3 mt-2';
             preview.innerHTML = `
@@ -353,11 +345,16 @@ unset($_SESSION['_flash']['errors']);
                 <strong>File mới:</strong> ${fileName} (${fileSize} MB)
             `;
             
-            // Remove old preview if exists
             const oldPreview = this.parentElement.querySelector('.alert-success');
             if (oldPreview) oldPreview.remove();
             
             this.parentElement.appendChild(preview);
         }
     });
+    
+    // Kích hoạt tooltip
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
 </script>

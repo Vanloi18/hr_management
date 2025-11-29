@@ -12,6 +12,7 @@
         }
     ],
     "require": {
-        "fakerphp/faker": "^1.24"
+        "fakerphp/faker": "^1.24",
+        "phpmailer/phpmailer": "^7.0"
     }
 }

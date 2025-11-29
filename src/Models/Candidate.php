@@ -87,12 +87,15 @@ class Candidate extends Model
     // Nếu bạn chưa có, tôi sẽ thêm các hàm cơ bản để code không bị lỗi khi gọi create/delete
     
     public function create($data)
-    {
-        // Ví dụ hàm create cơ bản
-        $sql = "INSERT INTO candidates (position_id, full_name, email, phone, cv_file_path, status, applied_at) 
-                VALUES (:position_id, :full_name, :email, :phone, :cv_file_path, :status, NOW())";
-        return $this->db->query($sql, $data);
-    }
+{
+    $sql = "INSERT INTO candidates 
+    (position_id, full_name, email, phone, cv_file_path, status, notes, applied_at) 
+    VALUES 
+    (:position_id, :full_name, :email, :phone, :cv_file_path, :status, :notes, NOW())";
+
+    return $this->db->query($sql, $data);
+}
+
 
     public function find($id)
     {

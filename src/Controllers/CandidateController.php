@@ -3,30 +3,37 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Models\Candidate; // <-- Import Model
-use App\Models\Position;  // <-- Import Model liên quan
-use App\Core\Validator; // <-- 1. Import Validator
-
+use App\Models\Candidate; 
+use App\Models\Position; 
+use App\Models\Employee;
+use App\Core\Validator; 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
 class CandidateController extends Controller
 {
+    // Dùng BASE_PATH để tạo đường dẫn vật lý tuyệt đối
     private const CV_UPLOAD_DIR = BASE_PATH . 'public/uploads/cvs/';
     private const ALLOWED_EXTENSIONS = ['pdf', 'doc', 'docx'];
     private const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
     protected $candidateModel;
+    protected $positionModel;
 
     public function __construct()
     {
         parent::__construct();
         $this->candidateModel = new Candidate();
+        $this->positionModel = new Position();
     }
 
+
+    // [Hàm INDEX]
     public function index()
     {
         $this->checkAuthentication();
 
         // 1. Lấy tham số filter từ URL
-        // Lưu ý: Đổi 'search' thành 'keyword' để đồng bộ với các trang khác
         $keyword     = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
         $status      = isset($_GET['status']) ? trim($_GET['status']) : '';
         $position_id = isset($_GET['position_id']) ? trim($_GET['position_id']) : '';
@@ -65,10 +72,12 @@ class CandidateController extends Controller
         return view('candidates/index', $data);
     }
 
+    // [Hàm CREATE]
     public function create()
     {
         $this->checkAuthentication();
-        $positions = (new Position())->allOpenForDropdown();
+        // Giả định Position Model có hàm allOpenForDropdown
+        $positions = $this->positionModel->allOpenForDropdown();
         $selected_position_id = $_GET['position_id'] ?? null;
         
         $data = [
@@ -83,9 +92,7 @@ class CandidateController extends Controller
         return view('candidates/create', $data);
     }
 
-    /**
-     * Xử lý lưu mới (POST /candidates) - Đã tái cấu trúc
-     */
+    // [Hàm STORE]
     public function store()
     {
         $this->checkAuthentication();
@@ -93,51 +100,47 @@ class CandidateController extends Controller
         // 1. Validate TEXT
         $validator = new Validator();
         $rules = [
-            'position_id' => 'required',
-            'full_name' => 'required',
+            'position_id' => 'required|numeric',
+            'full_name' => 'required|min:3',
             'email' => 'required|email|unique:candidates',
-            'phone' => 'required',
+            'phone' => 'required|min:8',
         ];
 
-        // 2. Ghi chú: Validator tự redirect về trang trước (create) nếu thất bại
         if (!$validator->validate($_POST, $rules)) {
+            // Validator đã tự động flash lỗi và redirect
             return; 
         }
 
-        // 3. Nếu Text OK -> Lấy dữ liệu và Xử lý FILES
-        $data = $validator->validatedData();
-        $data['status'] = e($_POST['status'] ?? 'pending');
-        $data['notes'] = e($_POST['notes'] ?? null);
-        $data['cv_file_path'] = null;
-        
+        // 2. Xử lý FILES (CV là bắt buộc khi TẠO MỚI)
         $file_info = $_FILES['cv_file'] ?? null;
-        $fileErrors = [];
-        
-        try {
-            if (empty($file_info) || $file_info['error'] === UPLOAD_ERR_NO_FILE) {
-                // File CV là bắt buộc khi TẠO MỚI
-                throw new \Exception('File CV là bắt buộc.');
-            }
-            $data['cv_file_path'] = $this->handleFileUpload($file_info); // Gọi hàm helper
-        } catch (\Exception $e) {
-            $fileErrors[] = $e->getMessage();
-        }
-        
-        // 4. Nếu File Lỗi -> Quay lại
-        if (!empty($fileErrors)) {
-            $_SESSION['_flash']['errors'] = $fileErrors;
-            $_SESSION['_flash']['old'] = $_POST;
-            // 2. Ghi chú: Dùng BASE_URL để đảm bảo đường dẫn
-            redirect('/candidates/create');
+        if (empty($file_info) || $file_info['error'] === UPLOAD_ERR_NO_FILE) {
+             flash('error', 'File CV là bắt buộc khi tạo mới hồ sơ.');
+             // Dùng $_POST để giữ lại giá trị cũ trong form
+             $_SESSION['_flash']['old'] = $_POST;
+             redirect('/candidates/create');
         }
 
-        // 5. Mọi thứ OK -> Lưu CSDL
+        $data = $validator->validatedData();
+        $data['status'] = e($_POST['status'] ?? 'applied'); // Mặc định là applied (đã nộp) hoặc pending
+        $data['notes'] = e($_POST['notes'] ?? null);
+        $data['applied_at'] = date('Y-m-d H:i:s'); // Ghi lại ngày nộp
+
+        try {
+            $data['cv_file_path'] = $this->handleFileUpload($file_info);
+        } catch (\Exception $e) {
+             flash('error', 'Lỗi File CV: ' . $e->getMessage());
+             $_SESSION['_flash']['old'] = $_POST;
+             redirect('/candidates/create');
+        }
+
+        // 3. Lưu CSDL
         $this->candidateModel->create($data);
 
         flash('success', 'Thêm ứng viên thành công!');
         redirect('/candidates');
     }
 
+    // [Hàm EDIT]
     public function edit()
     {
         $this->checkAuthentication();
@@ -150,7 +153,7 @@ class CandidateController extends Controller
             redirect('/candidates');
         }
         
-        $positions = (new Position())->allOpenForDropdown();
+        $positions = $this->positionModel->allOpenForDropdown();
         
         $data = [
             'title' => 'Chỉnh sửa Ứng viên',
@@ -164,63 +167,88 @@ class CandidateController extends Controller
         return view('candidates/edit', $data);
     }
 
-    /**
-     * Xử lý cập nhật (POST /candidates/update) - Đã tái cấu trúc
-     */
+    // [Hàm UPDATE]
     public function update()
-    {
-        $this->checkAuthentication();
-        $id = $_POST['id'] ?? null;
-        if (!$id) redirect('/candidates');
+{
+    $this->checkAuthentication();
+    $id = $_POST['id'] ?? null;
+    if (!$id) redirect('/candidates');
 
-        // 1. Validate TEXT
-        $validator = new Validator();
-        $rules = [
-            'position_id' => 'required',
-            'full_name' => 'required',
-            // 2. Ghi chú: Rule 'unique' khi update cần kèm ID
-            'email' => 'required|email|unique:candidates,' . $id,
-            'phone' => 'required',
-        ];
+    $oldCandidate = $this->candidateModel->find($id);
+    if (!$oldCandidate) redirect('/candidates');
 
-        // Validator tự redirect về trang trước (edit) nếu thất bại
-        if (!$validator->validate($_POST, $rules)) {
-            return;
-        }
+    // 1. Validate TEXT
+    $validator = new Validator();
+    $rules = [
+        'position_id' => 'required|numeric',
+        'full_name'   => 'required|min:3',
+        'email'       => 'required|email|unique:candidates,' . $id,
+        'phone'       => 'required|min:8',
+    ];
 
-        // 2. Nếu Text OK -> Lấy dữ liệu và Xử lý FILES
-        $data = $validator->validatedData();
-        $data['status'] = e($_POST['status'] ?? 'pending');
-        $data['notes'] = e($_POST['notes'] ?? null);
-        $file_info = $_FILES['cv_file'] ?? null;
-
-        $oldCandidate = $this->candidateModel->find($id);
-        $data['cv_file_path'] = $oldCandidate['cv_file_path']; // Giữ file cũ
-
-        // Chỉ xử lý file nếu có file MỚI được upload
-        if ($file_info && $file_info['error'] === UPLOAD_ERR_OK) {
-            try {
-                $data['cv_file_path'] = $this->handleFileUpload($file_info);
-                // Xóa file cũ
-                if ($oldCandidate['cv_file_path'] && file_exists(self::CV_UPLOAD_DIR . basename($oldCandidate['cv_file_path']))) {
-                    unlink(self::CV_UPLOAD_DIR . basename($oldCandidate['cv_file_path']));
-                }
-            } catch (\Exception $e) {
-                flash('error', $e->getMessage());
-                redirect('/candidates/edit?id=' . $id);
-            }
-        }
-
-        // 3. Cập nhật CSDL
-        $this->candidateModel->update($id, $data);
-
-        flash('success', 'Cập nhật ứng viên thành công!');
-        redirect('/candidates');
+    // Nếu chuyển sang trạng thái phỏng vấn => bắt buộc nhập lịch
+    if (($_POST['status'] ?? null) === 'interviewing') {
+        $rules['interview_date']     = 'required';
+        $rules['interview_location'] = 'required';
     }
 
-    /**
-     * Xử lý xóa (POST /candidates/delete) - PHIÊN BẢN AJAX
-     */
+    // Validator tự flash lỗi -> redirect quay lại EDIT
+    if (!$validator->validate($_POST, $rules)) {
+        redirect('/candidates/edit?id=' . $id);
+        return;
+    }
+
+    // 2. Lấy dữ liệu và Xử lý FILES
+    $data = $validator->validatedData();
+    $data['status'] = e($_POST['status'] ?? 'pending');
+    $data['notes']  = e($_POST['notes'] ?? null);
+
+    // Files
+    $file_info = $_FILES['cv_file'] ?? null;
+    $data['cv_file_path'] = $oldCandidate['cv_file_path']; // Giữ file mặc định
+
+    $data['interview_date'] = $data['status'] === 'interviewing' ? $_POST['interview_date'] : null;
+    $data['interview_location'] = $data['status'] === 'interviewing' ? $_POST['interview_location'] : null;
+    $this->candidateModel->update($id, $data);
+
+    if ($data['status'] === 'interviewing' && $oldCandidate['status'] !== 'interviewing') {
+        $updatedCandidate = $this->candidateModel->find($id);
+        $this->sendInterviewEmail($updatedCandidate);
+    }
+
+    if ($data['status'] === 'hired' && $oldCandidate['status'] !== 'hired') {
+
+        $employeeModel = new Employee();
+
+        // Lấy tên vị trí
+        $position = $this->positionModel->find($data['position_id']);
+        $jobTitle = $position['title'] ?? 'Chưa xác định';
+
+        $employeeData = [
+            'full_name'      => $data['full_name'],
+            'email'          => $data['email'],
+            'phone'          => $data['phone'],
+            'job_title'      => $jobTitle,
+            'department_id'  => 1,
+            'start_date'     => date('Y-m-d'),
+            'status'         => 'active',
+            'photo_path'     => null,
+            'contract_path'  => $oldCandidate['cv_file_path'], 
+        ];
+
+        $employeeModel->create($employeeData);
+
+        flash('success', 'Tuyệt vời! Đã tuyển dụng và tạo hồ sơ nhân viên thành công.');
+        redirect('/employees');
+        return;
+    }
+
+    flash('success', 'Cập nhật ứng viên thành công!');
+    redirect('/candidates');
+}
+
+
+    // [Hàm DESTROY]
     public function destroy()
     {
         $this->checkAuthentication();
@@ -233,13 +261,11 @@ class CandidateController extends Controller
                 throw new \Exception('Thiếu ID của Ứng viên.');
             }
 
-            // 1. Lấy thông tin file CV trước khi xóa
             $candidate = $this->candidateModel->find($id);
 
-            // 2. Xóa CSDL (Gọi Model)
             $this->candidateModel->delete($id);
 
-            // 3. Xóa file vật lý (nếu có)
+            // Xóa file vật lý (nếu có)
             if ($candidate && $candidate['cv_file_path']) {
                 $filePath = self::CV_UPLOAD_DIR . basename($candidate['cv_file_path']);
                 if (file_exists($filePath)) {
@@ -247,7 +273,6 @@ class CandidateController extends Controller
                 }
             }
 
-            // Trả về JSON thành công
             echo json_encode([
                 'success' => true,
                 'message' => 'Đã xóa ứng viên (và file CV liên quan).'
@@ -264,26 +289,15 @@ class CandidateController extends Controller
         }
     }
 
-    // --- Các hàm helper private ---
-    
-    /**
-     * 3. Ghi chú: Xóa hàm validateInput()
-     * Hàm này không còn cần thiết vì đã dùng Validator
-     */
-    // private function validateInput($name, $email, $phone, $pid, $id = null) { ... }
-    
-    /**
-     * HÀM HỖ TRỢ (HELPER)
-     * * Xử lý upload file.
-     * @return string $relativePath Đường dẫn file (tương đối, để lưu vào DB)
-     * @throws \Exception Nếu có lỗi
-     */
+    // --- HÀM HELPER PRIVATE ---
     private function handleFileUpload($fileInfo)
     {
+        // 1. Kiểm tra lỗi upload cơ bản
         if ($fileInfo['error'] !== UPLOAD_ERR_OK) {
             throw new \Exception('File upload bị lỗi.');
         }
 
+        // 2. Kiểm tra kích thước và định dạng
         if ($fileInfo['size'] > self::MAX_FILE_SIZE) {
             throw new \Exception('File quá lớn. Tối đa 5MB.');
         }
@@ -293,14 +307,71 @@ class CandidateController extends Controller
             throw new \Exception('Chỉ chấp nhận file định dạng: ' . implode(', ', self::ALLOWED_EXTENSIONS));
         }
 
+        // 3. Tạo tên file duy nhất và đường dẫn
         $fileName = uniqid() . '-' . basename($fileInfo['name']);
         $destination = self::CV_UPLOAD_DIR . $fileName;
         $relativePath = 'uploads/cvs/' . $fileName; 
 
+        // 4. Tạo thư mục nếu chưa tồn tại
+        if (!is_dir(self::CV_UPLOAD_DIR)) {
+            mkdir(self::CV_UPLOAD_DIR, 0777, true);
+        }
+
+        // 5. Di chuyển file
         if (move_uploaded_file($fileInfo['tmp_name'], $destination)) {
             return $relativePath;
         } else {
             throw new \Exception('Không thể di chuyển file đã upload.');
+        }
+    }
+
+    private function sendInterviewEmail($candidate) 
+    {
+        $mail = new PHPMailer(true);
+
+        try {
+            // Cấu hình Server SMTP
+            $mail->isSMTP();
+            $mail->Host       = SMTP_HOST;
+            $mail->SMTPAuth   = true;
+            $mail->Username   = SMTP_USERNAME; 
+            $mail->Password   = SMTP_PASSWORD;
+            $mail->SMTPSecure = SMTP_SECURE;
+            $mail->Port       = SMTP_PORT;
+            
+            // Cài đặt người gửi và người nhận
+            $mail->setFrom(SMTP_USERNAME, MAIL_FROM_NAME);
+            $mail->addAddress($candidate['email'], $candidate['full_name']); // Thêm người nhận
+
+            // Cài đặt Nội dung Email
+            $mail->isHTML(true); 
+            $mail->CharSet = 'UTF-8';
+            $mail->Subject = '[HR System] Thư mời phỏng vấn - ' . $candidate['position_title'];
+
+            $interviewTime = date('H:i, d/m/Y', strtotime($candidate['interview_date']));
+            
+            // Nội dung HTML (Bạn có thể làm đẹp thêm bằng CSS)
+            $mail->Body = "
+                <p>Chào bạn <b>{$candidate['full_name']}</b>,</p>
+                <p>Chúng tôi xin chúc mừng và thông báo bạn đã vượt qua vòng hồ sơ và được mời tham gia phỏng vấn cho vị trí <b>{$candidate['position_title']}</b> tại công ty chúng tôi.</p>
+                <hr>
+                <p><b>THÔNG TIN PHỎNG VẤN:</b></p>
+                <ul>
+                    <li><strong>Thời gian:</strong> {$interviewTime}</li>
+                    <li><strong>Địa điểm/Hình thức:</strong> {$candidate['interview_location']}</li>
+                    <li><strong>Liên hệ:</strong> ".MAIL_FROM_NAME."</li>
+                </ul>
+                <p>Vui lòng xác nhận tham gia phỏng vấn qua email này. Chúc bạn thành công!</p>
+                <p style='font-size: 0.8rem; color: #999;'>Trân trọng,<br>Bộ phận Tuyển dụng</p>
+            ";
+
+            $mail->send();
+            error_log('Email phỏng vấn đã được gửi thành công tới: ' . $candidate['email']);
+
+        } catch (Exception $e) {
+            // Xử lý lỗi: Ghi log lỗi vào file
+            error_log("LỖI GỬI EMAIL tới {$candidate['email']}: {$mail->ErrorInfo}");
+            // Bạn có thể dùng flash('error', 'Lỗi gửi email. Vui lòng kiểm tra log.') nếu cần báo lỗi cho HR
         }
     }
 }

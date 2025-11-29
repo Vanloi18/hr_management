@@ -44,23 +44,27 @@ class Employee extends Model
     }
 
     public function create($data)
-    {
-        return $this->db->query(
-            "INSERT INTO employees (department_id, full_name, email, phone, job_title, start_date, status, photo_path, contract_path) 
-             VALUES (:dep_id, :name, :email, :phone, :job, :start, :status, :photo, :contract)",
-            [
-                'dep_id' => $data['department_id'],
-                'name' => $data['full_name'],
-                'email' => $data['email'],
-                'phone' => $data['phone'],
-                'job' => $data['job_title'],
-                'start' => $data['start_date'],
-                'status' => $data['status'],
-                'photo' => $data['photo_path'],
-                'contract' => $data['contract_path']
-            ]
-        );
-    }
+{
+    $sql = "INSERT INTO employees 
+            (full_name, email, phone, job_title, department_id, start_date, status, photo_path, contract_path) 
+            VALUES 
+            (:full_name, :email, :phone, :job_title, :department_id, :start_date, :status, :photo_path, :contract_path)";
+    
+    // Đảm bảo array $data có đủ key cho các cột:
+    $params = [
+        'full_name' => $data['full_name'],
+        'email' => $data['email'],
+        'phone' => $data['phone'],
+        'job_title' => $data['job_title'],
+        'department_id' => $data['department_id'],
+        'start_date' => $data['start_date'],
+        'status' => $data['status'] ?? 'active',
+        'photo_path' => $data['photo_path'] ?? null,
+        'contract_path' => $data['contract_path'] ?? null,
+    ];
+    
+    return $this->db->query($sql, $params);
+}
 
     public function update($id, $data)
     {
