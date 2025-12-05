@@ -78,7 +78,11 @@
         </div>
 
         <ul class="navbar-nav ms-auto align-items-center gap-3">
-            
+            <li class="nav-item">
+               <button class="notification-btn border-0 bg-transparent" id="theme-toggle" data-bs-toggle="tooltip" title="Giao diện Sáng/Tối">
+                     <i class="bi bi-moon-stars" id="theme-icon"></i>
+                  </button>
+            </li>
             <li class="nav-item">
                 <a class="notification-btn" href="#" role="button" data-bs-toggle="tooltip" title="Thông báo">
                     <i class="bi bi-bell"></i>

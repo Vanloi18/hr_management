@@ -17,13 +17,14 @@ class ProfileController extends Controller
     }
 
     /**
-     * Hiển thị trang hồ sơ
+     * ================================
+     * HIỂN THỊ TRANG PROFILE
+     * ================================
      */
     public function index()
     {
         $this->checkAuthentication();
 
-        // Lấy thông tin mới nhất từ DB (tránh dùng session cũ)
         $user = $this->userModel->find($_SESSION['user']['id']);
 
         $data = [
@@ -31,7 +32,6 @@ class ProfileController extends Controller
             'user' => $user
         ];
 
-        // Hỗ trợ AJAX navigation
         if (isAjaxRequest()) {
             return partial('profile/index', $data);
         }
@@ -39,75 +39,112 @@ class ProfileController extends Controller
         return view('profile/index', $data);
     }
 
+
     /**
-     * Xử lý cập nhật thông tin
+     * ================================
+     * CẬP NHẬT THÔNG TIN CÁ NHÂN
+     * ================================
      */
-    public function update()
+    public function updateInfo()
     {
         $this->checkAuthentication();
-        $id = $_SESSION['user']['id'];
-        $data = $_POST;
+        $userId = $_SESSION['user']['id'];
+        $user = $this->userModel->find($userId);
 
-        // 1. Validate dữ liệu cơ bản
-        $rules = [
-            'full_name' => 'required|min:3',
-            'email' => 'required|email' // Kiểm tra email trùng sẽ xử lý riêng bên dưới
+        $data = [
+            'full_name' => trim($_POST['full_name']),
         ];
 
-        // Nếu có nhập mật khẩu thì validate thêm
-        if (!empty($data['password'])) {
-            $rules['password'] = 'min:6';
-            $rules['confirm_password'] = 'required|matches:password';
-        }
-
+        // Validate tên
         $validator = new Validator();
-        if (!$validator->validate($data, $rules)) {
-            redirect('/profile');
+        if (!$validator->validate($data, [
+            'full_name' => 'required|min:3'
+        ])) {
+            redirect('/settings?tab=personal');
         }
 
-        // 2. Kiểm tra Email có bị trùng với người khác không
-        $existingUser = $this->userModel->findByEmailAndNotId($data['email'], $id);
-        if ($existingUser) {
-            flash('error', 'Email này đã được sử dụng bởi tài khoản khác.');
-            redirect('/profile');
-        }
+        /**
+         * XỬ LÝ UPLOAD ẢNH
+         */
+        if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
 
-        // 3. Xử lý Avatar (Nếu có upload file)
-        // Lưu ý: Cần đảm bảo form HTML có enctype="multipart/form-data"
-        if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === 0) {
-            $allowed = ['jpg', 'jpeg', 'png', 'gif'];
-            $filename = $_FILES['avatar']['name'];
-            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+            $allowedExt = ['jpg', 'jpeg', 'png', 'gif'];
+            $ext = strtolower(pathinfo($_FILES['avatar']['name'], PATHINFO_EXTENSION));
 
-            if (in_array($ext, $allowed)) {
-                $newName = 'avatar_' . $id . '_' . time() . '.' . $ext;
-                $uploadDir = 'uploads/avatars/';
-                
-                // Tạo thư mục nếu chưa có
-                if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+            if (!in_array($ext, $allowedExt)) {
+                flash('error', 'Định dạng ảnh không hợp lệ.');
+                redirect('/settings?tab=personal');
+            }
 
-                if (move_uploaded_file($_FILES['avatar']['tmp_name'], $uploadDir . $newName)) {
-                    $data['avatar'] = $newName; // Thêm tên file vào data để update DB
+            $uploadDir = BASE_PATH . 'public/uploads/avatars/';
+            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+
+            $fileName = 'user_' . $userId . '_' . time() . '.' . $ext;
+
+            if (move_uploaded_file($_FILES['avatar']['tmp_name'], $uploadDir . $fileName)) {
+
+                // Xóa avatar cũ
+                if (!empty($user['avatar']) && file_exists($uploadDir . $user['avatar'])) {
+                    unlink($uploadDir . $user['avatar']);
                 }
+
+                $data['avatar'] = $fileName;
+
+                // Cập nhật session
+                $_SESSION['user']['avatar'] = $fileName;
             }
         } else {
-            // Giữ nguyên avatar cũ
-            $currentUser = $this->userModel->find($id);
-            $data['avatar'] = $currentUser['avatar'];
+            // Không upload => giữ avatar cũ
+            $data['avatar'] = $user['avatar'];
         }
 
-        // 4. Giữ nguyên role của user (không cho tự sửa quyền)
-        $data['role'] = $_SESSION['user']['role'];
+        // Update DB
+        $this->userModel->update($userId, $data);
 
-        // 5. Cập nhật vào DB
-        $this->userModel->update($id, $data);
-
-        // 6. Cập nhật lại Session để hiển thị đúng trên Topbar ngay lập tức
+        // Update session name
         $_SESSION['user']['full_name'] = $data['full_name'];
-        $_SESSION['user']['email'] = $data['email'];
-        $_SESSION['user']['avatar'] = $data['avatar'];
 
-        flash('success', 'Cập nhật hồ sơ thành công!');
-        redirect('/profile');
+        flash('success', 'Đã cập nhật thông tin cá nhân.');
+        redirect('/settings?tab=personal');
+    }
+
+
+    /**
+     * ================================
+     * ĐỔI MẬT KHẨU
+     * ================================
+     */
+    public function changePassword()
+    {
+        $this->checkAuthentication();
+        $userId = $_SESSION['user']['id'];
+        $user = $this->userModel->find($userId);
+
+        $current = $_POST['current_password'];
+        $new = $_POST['new_password'];
+        $confirm = $_POST['confirm_password'];
+
+        if (!password_verify($current, $user['password'])) {
+            flash('error', 'Mật khẩu hiện tại không đúng.');
+            redirect('/settings?tab=security');
+        }
+
+        if ($new !== $confirm) {
+            flash('error', 'Mật khẩu xác nhận không khớp.');
+            redirect('/settings?tab=security');
+        }
+
+        if (strlen($new) < 6) {
+            flash('error', 'Mật khẩu mới phải ít nhất 6 ký tự.');
+            redirect('/settings?tab=security');
+        }
+
+        // Cập nhật mật khẩu
+        $this->userModel->update($userId, [
+            'password' => password_hash($new, PASSWORD_DEFAULT)
+        ]);
+
+        flash('success', 'Đổi mật khẩu thành công!');
+        redirect('/settings?tab=security');
     }
 }

@@ -10,6 +10,14 @@ use App\Core\Validator;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\SMTP;
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use Mpdf\Mpdf;
+
 class CandidateController extends Controller
 {
     // Dùng BASE_PATH để tạo đường dẫn vật lý tuyệt đối
@@ -373,5 +381,154 @@ class CandidateController extends Controller
             error_log("LỖI GỬI EMAIL tới {$candidate['email']}: {$mail->ErrorInfo}");
             // Bạn có thể dùng flash('error', 'Lỗi gửi email. Vui lòng kiểm tra log.') nếu cần báo lỗi cho HR
         }
+    }
+
+    /**
+     * Xuất Excel danh sách Ứng viên
+     */
+    public function exportExcel()
+    {
+        $this->checkAuthentication();
+
+        // 1. Lấy tham số filter
+        $keyword     = $_GET['keyword'] ?? '';
+        $status      = $_GET['status'] ?? '';
+        $position_id = $_GET['position_id'] ?? '';
+
+        // 2. Lấy dữ liệu
+        $candidates = $this->candidateModel->getAllForExport($keyword, $status, $position_id);
+
+        // 3. Khởi tạo Excel
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Danh sách Ứng viên');
+
+        // Header
+        $headers = ['ID', 'Họ tên', 'Email', 'SĐT', 'Vị trí ứng tuyển', 'Ngày nộp', 'Trạng thái'];
+        $sheet->fromArray([$headers], NULL, 'A1');
+
+        // Data
+        $rows = [];
+        foreach ($candidates as $cand) {
+            // Mapping trạng thái sang tiếng Việt
+            $statusText = match($cand['status']) {
+                'applied'      => 'Đã nộp hồ sơ',
+                'interviewing' => 'Đang phỏng vấn',
+                'hired'        => 'Đã tuyển',
+                'rejected'     => 'Từ chối',
+                default        => $cand['status']
+            };
+
+            $rows[] = [
+                $cand['id'],
+                $cand['full_name'],
+                $cand['email'],
+                $cand['phone'],
+                $cand['position_title'] ?? 'N/A',
+                date('d/m/Y H:i', strtotime($cand['applied_at'])),
+                $statusText
+            ];
+        }
+
+        if (!empty($rows)) {
+            $sheet->fromArray($rows, NULL, 'A2');
+        }
+
+        // Style
+        $lastRow = count($rows) + 1;
+        $sheet->getStyle("A1:G{$lastRow}")->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
+        ]);
+        $sheet->getStyle('A1:G1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '198754']], // Màu xanh success
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+        ]);
+        foreach (range('A', 'G') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
+
+        // Output
+        $fileName = 'DS_UngVien_' . date('dmY_Hi') . '.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $fileName . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
+    /**
+     * Xuất PDF danh sách Ứng viên
+     */
+    public function exportPDF()
+    {
+        $this->checkAuthentication();
+
+        $keyword     = $_GET['keyword'] ?? '';
+        $status      = $_GET['status'] ?? '';
+        $position_id = $_GET['position_id'] ?? '';
+
+        $candidates = $this->candidateModel->getAllForExport($keyword, $status, $position_id);
+
+        // HTML Template
+        $html = '
+        <html>
+        <head>
+            <style>
+                body { font-family: DejaVu Sans, sans-serif; font-size: 11px; }
+                h2 { text-align: center; color: #198754; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                th { background-color: #198754; color: white; padding: 8px; border: 1px solid #333; font-weight: bold; }
+                td { padding: 8px; border: 1px solid #444; text-align: center; }
+                .text-left { text-align: left; }
+            </style>
+        </head>
+        <body>
+            <h2>DANH SÁCH ỨNG VIÊN</h2>
+            <p style="text-align:center">Ngày xuất: ' . date('d/m/Y H:i') . '</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th width="5%">ID</th>
+                        <th width="20%">Họ tên</th>
+                        <th width="20%">Liên hệ</th>
+                        <th width="20%">Vị trí</th>
+                        <th width="15%">Ngày nộp</th>
+                        <th width="20%">Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>';
+        
+        foreach ($candidates as $cand) {
+            $statusText = match($cand['status']) {
+                'applied'      => 'Đã nộp hồ sơ',
+                'interviewing' => 'Đang phỏng vấn',
+                'hired'        => 'Đã tuyển',
+                'rejected'     => 'Từ chối',
+                default        => $cand['status']
+            };
+            
+            $contactInfo = $cand['email'] . '<br>' . $cand['phone'];
+
+            $html .= '<tr>
+                <td>' . $cand['id'] . '</td>
+                <td class="text-left">' . $cand['full_name'] . '</td>
+                <td class="text-left">' . $contactInfo . '</td>
+                <td>' . ($cand['position_title'] ?? '-') . '</td>
+                <td>' . date('d/m/Y', strtotime($cand['applied_at'])) . '</td>
+                <td>' . $statusText . '</td>
+            </tr>';
+        }
+
+        $html .= '</tbody></table></body></html>';
+
+        try {
+            $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4-L']);
+            $mpdf->WriteHTML($html);
+            $mpdf->Output('DS_UngVien_' . date('dmY') . '.pdf', 'D');
+        } catch (\Exception $e) {
+            echo "Lỗi xuất PDF: " . $e->getMessage();
+        }
+        exit;
     }
 }

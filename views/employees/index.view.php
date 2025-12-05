@@ -45,6 +45,32 @@
                     <button type="submit" class="btn btn-light rounded-pill border-0 flex-fill" data-bs-toggle="tooltip" title="Áp dụng bộ lọc">
                         <i class="bi bi-funnel"></i>
                     </button>
+
+                    <div class="dropdown">
+                        <button class="btn btn-success rounded-pill shadow-sm dropdown-toggle text-nowrap" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-download"></i> Xuất file
+                        </button>
+                        <ul class="dropdown-menu shadow border-0">
+                            <?php 
+                                $queryString = http_build_query([
+                                    'keyword' => $keyword ?? '',
+                                    'status' => $status ?? '',
+                                    'department_id' => $department_id ?? ''
+                                ]);
+                            ?>
+                            <li>
+                                <a class="dropdown-item" href="<?php echo BASE_URL; ?>/employees/export-excel?<?php echo $queryString; ?>">
+                                    <i class="bi bi-file-earmark-excel text-success me-2"></i> Xuất Excel
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="<?php echo BASE_URL; ?>/employees/export-pdf?<?php echo $queryString; ?>">
+                                    <i class="bi bi-file-earmark-pdf text-danger me-2"></i> Xuất PDF
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
                     <a href="<?php echo BASE_URL; ?>/employees/create" class="btn btn-primary rounded-pill flex-fill fw-medium shadow-sm text-nowrap">
                         <i class="bi bi-plus-lg"></i> Thêm
                     </a>

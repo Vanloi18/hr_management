@@ -3,38 +3,37 @@ $errors = $_SESSION['_flash']['errors'] ?? [];
 unset($_SESSION['_flash']['errors']); 
 ?>
 
-<div class="container-fluid py-4">
+<div class="container-fluid py-4 bg-light">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden edit-user-card">
 
-                <div class="card-header border-0 py-4" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="card-header border-0 py-4 bg-primary text-white">
                     <div class="d-flex align-items-center">
-                        <div class="icon-box bg-white bg-opacity-25 rounded-3 p-3 me-3">
-                            <i class="bi bi-pencil-square text-white" style="font-size: 1.5rem;"></i>
+                        <div class="icon-box bg-white bg-opacity-25 rounded-circle p-3 me-3 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                            <i class="bi bi-person-gear fs-3"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <h4 class="mb-1 text-white fw-bold"><?php echo e($title); ?></h4>
-                            <p class="mb-0 text-white-50 small">
-                                <i class="bi bi-person-circle me-1"></i>
-                                Đang chỉnh sửa: <strong><?php echo e($user['full_name']); ?></strong>
+                            <h4 class="mb-1 fw-bold"><?php echo e($title); ?></h4>
+                            <p class="mb-0 opacity-75 small">
+                                Đang chỉnh sửa hồ sơ: <strong><?php echo e($user['full_name']); ?></strong>
                             </p>
                         </div>
-                        <div class="badge bg-white text-dark rounded-pill px-3 py-2">
+                        <span class="badge bg-white text-primary rounded-pill px-3 py-2 fw-bold shadow-sm">
                             ID: #<?php echo e($user['id']); ?>
-                        </div>
+                        </span>
                     </div>
                 </div>
 
                 <div class="card-body p-4 p-md-5">
 
                     <?php if (!empty($errors)): ?>
-                        <div class="alert alert-danger border-0 rounded-3 shadow-sm" role="alert">
+                        <div class="alert alert-danger border-0 rounded-3 shadow-sm mb-4" role="alert">
                             <div class="d-flex align-items-start">
-                                <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
-                                <div class="flex-grow-1">
-                                    <h6 class="alert-heading mb-2 fw-bold">Có lỗi xảy ra!</h6>
-                                    <ul class="mb-0 ps-3">
+                                <i class="bi bi-exclamation-triangle-fill me-3 fs-4 mt-1"></i>
+                                <div>
+                                    <h6 class="alert-heading fw-bold mb-1">Đã xảy ra lỗi!</h6>
+                                    <ul class="mb-0 ps-3 small">
                                         <?php foreach ($errors as $error): ?>
                                             <li><?php echo e($error); ?></li>
                                         <?php endforeach; ?>
@@ -48,135 +47,84 @@ unset($_SESSION['_flash']['errors']);
                         <?php csrf_field(); ?>
                         <input type="hidden" name="id" value="<?php echo e($user['id']); ?>">
 
-                        <div class="section-title mb-4">
-                            <h5 class="fw-bold text-muted mb-3">
-                                <i class="bi bi-info-circle-fill me-2"></i>Thông tin cơ bản
-                            </h5>
-                        </div>
-
                         <div class="mb-4">
-                            <label for="full_name" class="form-label fw-semibold">
-                                <i class="bi bi-person text-danger me-2"></i>Họ tên
-                                <span class="text-danger">*</span>
-                            </label>
-                            <input type="text" 
-                                   id="full_name" 
-                                   name="full_name" 
-                                   class="form-control form-control-lg rounded-3 shadow-sm" 
-                                   value="<?php echo e($user['full_name']); ?>" 
-                                   placeholder="Nhập họ và tên đầy đủ"
-                                   required>
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="email" class="form-label fw-semibold">
-                                <i class="bi bi-envelope text-danger me-2"></i>Email
-                                <span class="text-danger">*</span>
-                            </label>
-                            <input type="email" 
-                                   id="email" 
-                                   name="email" 
-                                   class="form-control form-control-lg rounded-3 shadow-sm" 
-                                   value="<?php echo e($user['email']); ?>" 
-                                   placeholder="example@company.com"
-                                   required>
-                            <div class="form-text">
-                                <i class="bi bi-info-circle me-1"></i>Email sẽ dùng để đăng nhập
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="role" class="form-label fw-semibold">
-                                <i class="bi bi-shield-check text-danger me-2"></i>Vai trò
-                                <span class="text-danger">*</span>
-                            </label>
-                            <select id="role" name="role" class="form-select form-select-lg rounded-3 shadow-sm">
-                                <option value="hr" <?php echo $user['role'] === 'hr' ? 'selected' : ''; ?>>
-                                    Nhân viên HR (HR)
-                                </option>
-                                <option value="admin" <?php echo $user['role'] === 'admin' ? 'selected' : ''; ?>>
-                                    Quản trị viên (Admin)
-                                </option>
-                            </select>
-                        </div>
-
-                        <hr class="my-4">
-
-                        <div class="section-title mb-4">
-                            <h5 class="fw-bold text-muted mb-2">
-                                <i class="bi bi-key-fill me-2"></i>Thay đổi mật khẩu
-                            </h5>
-                            <div class="alert alert-info border-0 rounded-3 shadow-sm d-flex align-items-center">
-                                <i class="bi bi-info-circle-fill me-3 fs-5"></i>
-                                <span>Bỏ trống nếu không muốn thay đổi mật khẩu</span>
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label for="password" class="form-label fw-semibold">
-                                    <i class="bi bi-lock text-warning me-2"></i>Mật khẩu mới
-                                </label>
-                                <div class="input-group shadow-sm">
-                                    <input type="password" 
-                                           id="password" 
-                                           name="password" 
-                                           class="form-control form-control-lg rounded-start-3 border-end-0" 
-                                           placeholder="Nhập mật khẩu mới">
-                                    <button class="btn btn-outline-secondary rounded-end-3" 
-                                            type="button" 
-                                            onclick="togglePassword('password')">
-                                        <i class="bi bi-eye" id="password-icon"></i>
-                                    </button>
+                            <h6 class="fw-bold text-uppercase text-secondary text-xs opacity-75 mb-3 ls-1">
+                                <i class="bi bi-info-circle me-1"></i> Thông tin cơ bản
+                            </h6>
+                            
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="full_name" class="form-label fw-medium">Họ và tên <span class="text-danger">*</span></label>
+                                    <input type="text" id="full_name" name="full_name" 
+                                           class="form-control form-control-lg bg-light border-0" 
+                                           value="<?php echo e($user['full_name']); ?>" required>
                                 </div>
-                                <div class="form-text">
-                                    <i class="bi bi-shield-lock me-1"></i>Tối thiểu 6 ký tự
+                                
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label fw-medium">Email <span class="text-danger">*</span></label>
+                                    <input type="email" id="email" name="email" 
+                                           class="form-control form-control-lg bg-light border-0" 
+                                           value="<?php echo e($user['email']); ?>" required>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="confirm_password" class="form-label fw-semibold">
-                                    <i class="bi bi-lock-fill text-warning me-2"></i>Xác nhận Mật khẩu
-                                </label>
-                                <div class="input-group shadow-sm">
-                                    <input type="password" 
-                                           class="form-control form-control-lg rounded-start-3 border-end-0" 
-                                           id="confirm_password" 
-                                           name="confirm_password" 
-                                           placeholder="Nhập lại mật khẩu mới">
-                                    <button class="btn btn-outline-secondary rounded-end-3" 
-                                            type="button" 
-                                            onclick="togglePassword('confirm_password')">
-                                        <i class="bi bi-eye" id="confirm_password-icon"></i>
-                                    </button>
+                                
+                                <div class="col-md-6">
+                                    <label for="role" class="form-label fw-medium">Vai trò <span class="text-danger">*</span></label>
+                                    <select id="role" name="role" class="form-select form-select-lg bg-light border-0 cursor-pointer">
+                                        <option value="hr" <?php echo $user['role'] === 'hr' ? 'selected' : ''; ?>>Nhân viên HR</option>
+                                        <option value="admin" <?php echo $user['role'] === 'admin' ? 'selected' : ''; ?>>Quản trị viên (Admin)</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex gap-3 justify-content-end mt-4">
-                            <a href="<?php echo BASE_URL; ?>/users" 
-                               class="btn btn-lg btn-light border rounded-pill px-4 shadow-sm">
-                                <i class="bi bi-x-circle me-2"></i>Hủy
+                        <hr class="border-secondary border-opacity-10 my-4">
+
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-uppercase text-secondary text-xs opacity-75 mb-3 ls-1">
+                                <i class="bi bi-shield-lock me-1"></i> Bảo mật
+                            </h6>
+                            
+                            <div class="alert alert-light border-0 rounded-3 d-flex align-items-center mb-3">
+                                <i class="bi bi-info-circle text-info me-3 fs-5"></i>
+                                <span class="small text-muted">Chỉ nhập mật khẩu bên dưới nếu bạn muốn thay đổi. Nếu không, hãy để trống.</span>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="password" class="form-label fw-medium">Mật khẩu mới</label>
+                                    <div class="input-group">
+                                        <input type="password" id="password" name="password" 
+                                               class="form-control form-control-lg bg-light border-0 border-end-0" 
+                                               placeholder="••••••">
+                                        <button class="btn btn-light border-0 text-secondary bg-light" type="button" onclick="togglePassword('password')">
+                                            <i class="bi bi-eye" id="password-icon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="confirm_password" class="form-label fw-medium">Xác nhận mật khẩu</label>
+                                    <div class="input-group">
+                                        <input type="password" id="confirm_password" name="confirm_password" 
+                                               class="form-control form-control-lg bg-light border-0 border-end-0" 
+                                               placeholder="••••••">
+                                        <button class="btn btn-light border-0 text-secondary bg-light" type="button" onclick="togglePassword('confirm_password')">
+                                            <i class="bi bi-eye" id="confirm_password-icon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 justify-content-end mt-5">
+                            <a href="<?php echo BASE_URL; ?>/users" class="btn btn-light btn-lg px-4 rounded-pill border-0 text-secondary">
+                                Hủy bỏ
                             </a>
-                            <button type="submit" 
-                                    class="btn btn-lg btn-primary rounded-pill px-5 shadow-sm" 
-                                    style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border: none;">
-                                <i class="bi bi-save-fill me-2"></i>Cập nhật
+                            <button type="submit" class="btn btn-primary btn-lg px-5 rounded-pill shadow-sm fw-medium">
+                                <i class="bi bi-check2-circle me-2"></i>Cập nhật
                             </button>
                         </div>
-                    </form>
-                </div>
 
-                <div class="card-footer bg-light border-0 py-3">
-                    <div class="d-flex justify-content-between align-items-center text-muted small">
-                        <span>
-                            <i class="bi bi-calendar3 me-1"></i>
-                            Tạo lúc: <strong><?php echo date('d/m/Y H:i', strtotime($user['created_at'])); ?></strong>
-                        </span>
-                        <span>
-                            <i class="bi bi-clock-history me-1"></i>
-                            ID: <strong>#<?php echo e($user['id']); ?></strong>
-                        </span>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -184,77 +132,56 @@ unset($_SESSION['_flash']['errors']);
 </div>
 
 <style>
-    /* Custom styles cho form */
-    .form-control:focus,
-    .form-select:focus {
-        border-color: #f5576c;
-        box-shadow: 0 0 0 0.25rem rgba(245, 87, 108, 0.25);
+    /* Letter Spacing cho tiêu đề nhỏ */
+    .ls-1 { letter-spacing: 1px; }
+    
+    /* Input Focus Styles */
+    .form-control:focus, .form-select:focus {
+        background-color: #fff;
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15);
+        border: 1px solid #86b7fe !important;
+    }
+
+    /* Dark Mode Overrides cho trang Edit User */
+    [data-theme="dark"] .edit-user-card {
+        background-color: #1e1e1e !important;
+        border: 1px solid #333 !important;
     }
     
-    .icon-box {
-        transition: transform 0.3s ease;
+    [data-theme="dark"] .form-control,
+    [data-theme="dark"] .form-select,
+    [data-theme="dark"] .input-group .btn-light {
+        background-color: #2b2b2b !important; /* Input nền tối */
+        color: #fff !important;
+        border-color: #444 !important;
     }
     
-    .card:hover .icon-box {
-        transform: scale(1.1) rotate(5deg);
+    [data-theme="dark"] .form-control:focus {
+        border-color: #0d6efd !important;
+        background-color: #333 !important;
     }
     
-    .btn {
-        transition: all 0.3s ease;
+    [data-theme="dark"] .text-secondary {
+        color: #a0a0a0 !important;
     }
     
-    .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
-    }
-    
-    .section-title h5 {
-        position: relative;
-        padding-bottom: 10px;
-    }
-    
-    .section-title h5::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 50px;
-        height: 3px;
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        border-radius: 2px;
-    }
-    
-    .form-text {
-        font-size: 0.875rem;
-        color: #6c757d;
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-        .card-body {
-            padding: 1.5rem !important;
-        }
-        
-        .card-header .badge {
-            display: none;
-        }
+    [data-theme="dark"] .alert-light {
+        background-color: #2c2c2c;
+        color: #ddd;
     }
 </style>
 
 <script>
-    // Toggle hiển thị mật khẩu
     function togglePassword(fieldId) {
         const field = document.getElementById(fieldId);
         const icon = document.getElementById(fieldId + '-icon');
         
         if (field.type === 'password') {
             field.type = 'text';
-            icon.classList.remove('bi-eye');
-            icon.classList.add('bi-eye-slash');
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
         } else {
             field.type = 'password';
-            icon.classList.remove('bi-eye-slash');
-            icon.classList.add('bi-eye');
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
         }
     }
 </script>

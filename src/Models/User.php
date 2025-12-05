@@ -31,36 +31,45 @@ class User extends Model
 
     public function create($data)
     {
-        $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
+        // Code cũ của bạn có thể đang dùng bindParam rời rạc
+        // Hãy đổi sang dạng mảng dynamic này cho tiện:
         
-        return $this->db->query(
-            "INSERT INTO users (full_name, email, password, role) VALUES (:full_name, :email, :password, :role)",
-            [
-                'full_name' => $data['full_name'],
-                'email' => $data['email'],
-                'password' => $hashedPassword,
-                'role' => $data['role']
-            ]
-        );
+        $sql = "INSERT INTO users (full_name, email, password, role, status, created_at) 
+                VALUES (:full_name, :email, :password, :role, :status, NOW())";
+        
+        // Đảm bảo data có đủ key, nếu thiếu thì gán mặc định
+        $params = [
+            'full_name' => $data['full_name'],
+            'email'     => $data['email'],
+            'password'  => $data['password'],
+            'role'      => $data['role'],
+            'status'    => $data['status'] ?? 1
+        ];
+
+        return $this->db->query($sql, $params);
     }
 
     public function update($id, $data)
     {
-        $params = [
-            'full_name' => $data['full_name'],
-            'email' => $data['email'],
-            'role' => $data['role'],
-            'id' => $id
-        ];
-
-        if (!empty($data['password'])) {
-            $params['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
-            $sql = "UPDATE users SET full_name = :full_name, email = :email, role = :role, password = :password WHERE id = :id";
-        } else {
-            $sql = "UPDATE users SET full_name = :full_name, email = :email, role = :role WHERE id = :id";
+        // 1. Nếu không có dữ liệu gì để sửa thì return luôn
+        if (empty($data)) {
+            return true; 
         }
 
-        return $this->db->query($sql, $params);
+        // 2. Tạo câu query động: UPDATE users SET col1=:col1, col2=:col2 WHERE id=:id
+        $fields = [];
+        foreach ($data as $key => $value) {
+            // Chỉ thêm các trường có trong mảng $data
+            $fields[] = "$key = :$key";
+        }
+
+        $sql = "UPDATE users SET " . implode(', ', $fields) . " WHERE id = :id";
+        
+        // 3. Thêm ID vào mảng data để bind vào tham số :id trong câu SQL
+        $data['id'] = $id; 
+        
+        // 4. Thực thi
+        return $this->db->query($sql, $data);
     }
 
     public function delete($id)

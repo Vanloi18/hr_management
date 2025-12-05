@@ -118,4 +118,43 @@ class Candidate extends Model
     {
         return $this->db->query("DELETE FROM candidates WHERE id = :id", ['id' => $id]);
     }
+
+    /**
+     * Lấy toàn bộ danh sách ứng viên theo bộ lọc (Dùng cho Export)
+     */
+    public function getAllForExport($keyword = '', $status = '', $position_id = '')
+    {
+        // Copy logic JOIN từ getPaginated để lấy tên vị trí
+        $sql = "SELECT c.*, p.title as position_title 
+                FROM candidates c 
+                LEFT JOIN positions p ON c.position_id = p.id 
+                WHERE 1=1";
+        
+        $params = [];
+
+        // 1. Tìm kiếm
+        if (!empty($keyword)) {
+            $sql .= " AND (c.full_name LIKE ? OR c.email LIKE ? OR c.phone LIKE ?)";
+            $keywordParam = "%$keyword%";
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+        }
+
+        // 2. Lọc theo Trạng thái
+        if (!empty($status)) {
+            $sql .= " AND c.status = ?";
+            $params[] = $status;
+        }
+
+        // 3. Lọc theo Vị trí
+        if (!empty($position_id)) {
+            $sql .= " AND c.position_id = ?";
+            $params[] = $position_id;
+        }
+
+        $sql .= " ORDER BY c.id DESC"; // Lấy HẾT, không LIMIT
+
+        return $this->db->query($sql, $params)->fetchAll();
+    }
 }

@@ -1,25 +1,41 @@
-/* --- BIẾN MÀU (DÙNG CHO SIDEBAR DARK MODE "KÍNH MỜ") --- */
+/* =========================================================
+   1. CẤU HÌNH BIẾN MÀU (VARIABLE CONFIG)
+   ========================================================= */
 :root {
-    --apple-widget-bg: rgba(28, 28, 30, 0.85);
-    /* Nền đen mờ (Core) */
-    --apple-widget-border: rgba(80, 80, 80, 0.5);
-    /* Viền mỏng, mờ */
-    --apple-text-primary: #ffffff;
-    /* Chữ chính (Trắng) */
-    --apple-text-secondary: #a0a0a5;
-    /* Chữ phụ (Xám nhạt) */
-    --apple-link-blue: #007aff;
-    /* Xanh dương */
-    --apple-active-bg: rgba(0, 122, 255, 0.25);
-    /* Nền active xanh mờ */
-    --apple-hover-bg: rgba(255, 255, 255, 0.1);
-    /* Nền hover trắng mờ */
+    /* --- LIGHT MODE VARIABLES (MẶC ĐỊNH) --- */
+    --sidebar-bg-light: #ffffff;
+    --sidebar-text-light: #344767;
+    --sidebar-border-light: #e9ecef;
+    --topbar-bg-light: rgba(255, 255, 255, 0.95);
+    /* Trắng mờ nhẹ */
+
+    /* --- DARK MODE VARIABLES (APPLE GLASS STYLE) --- */
+    /* Tăng độ đậm lên 0.92 để bớt bị mờ chữ */
+    --glass-bg-dark: rgba(20, 20, 20, 0.92);
+    --glass-border-dark: rgba(255, 255, 255, 0.1);
+    --text-primary-dark: #ffffff;
+    --text-secondary-dark: #b0b0b5;
+    --active-bg-dark: rgba(0, 122, 255, 0.2);
+    --active-text-dark: #3b82f6;
 }
 
+/* Hiệu ứng chuyển đổi mượt mà cho toàn bộ giao diện */
+body,
+.sidebar,
+.topbar,
+.card,
+.nav-link,
+i,
+span {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
 
-/* --- CSS GỐC TỪ MASTER.VIEW.PHP (Giữ nguyên) --- */
+/* =========================================================
+   2. CẤU TRÚC LAYOUT CHUNG
+   ========================================================= */
 body {
-    background-color: #f8f9fa;
+    background-color: #f5f7f9;
+    /* Nền tổng thể xám nhạt */
     min-height: 100vh;
 }
 
@@ -46,278 +62,225 @@ body {
     border-top: 1px solid #dee2e6;
     color: #6c757d;
     font-size: 0.9rem;
+    transition: all 0.3s;
 }
 
-.topbar {
-    flex-shrink: 0;
-    background-color: #ffffff;
-    border-bottom: 1px solid #dee2e6;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-}
+/* =========================================================
+   3. SIDEBAR & TOPBAR (LIGHT MODE - MẶC ĐỊNH)
+   ========================================================= */
 
-/* --- SIDEBAR (Phong cách Apple Dashboard - Kính mờ) --- */
-
+/* --- SIDEBAR --- */
 .sidebar {
     width: 260px;
     flex-shrink: 0;
-    color: var(--apple-text-primary);
-    /* Chữ trắng */
+    background-color: var(--sidebar-bg-light);
+    border-right: 1px solid var(--sidebar-border-light);
+    color: var(--sidebar-text-light);
     padding: 1rem;
-    transition: all 0.3s;
-    box-shadow: none;
-
-    /* 🔥 HIỆU ỨNG KÍNH MỜ CỐT LÕI */
-    background-color: var(--apple-widget-bg);
-    /* Nền đen trong suốt */
-    backdrop-filter: blur(16px);
-    /* LÀM MỜ NỀN PHÍA SAU */
-    -webkit-backdrop-filter: blur(16px);
-    /* Hỗ trợ Safari */
-    border-right: 1px solid var(--apple-widget-border);
-    /* Viền mờ */
+    z-index: 1000;
 }
 
 .sidebar-brand {
     font-size: 1.4rem;
-    font-weight: 600;
+    font-weight: 700;
     text-decoration: none;
-    color: var(--apple-text-primary);
-    /* Chữ trắng */
+    color: #344767;
     display: block;
     text-align: center;
     padding-bottom: 1rem;
     margin-bottom: 0.5rem;
-    border-bottom: 1px solid var(--apple-widget-border);
-    /* Viền mờ */
+    border-bottom: 1px solid var(--sidebar-border-light);
 }
 
 .sidebar .nav-link {
     border-radius: 8px;
     margin-bottom: 0.25rem;
-    color: var(--apple-text-secondary);
-    /* Chữ xám nhạt (Phụ) */
-    transition: background-color 0.2s, color 0.2s;
+    color: #67748e;
+    /* Màu chữ xám mặc định */
     font-weight: 500;
     padding: 0.6rem 0.75rem;
-    margin-left: 0.25rem;
-    margin-right: 0.25rem;
 }
 
-/* Hiệu ứng khi rê chuột (hover) */
-.sidebar .nav-link:not(.active):hover {
-    background-color: var(--apple-hover-bg);
-    /* Nền trắng mờ */
-    color: var(--apple-text-primary);
-    /* Chữ trắng (Chính) */
+.sidebar .nav-link:hover {
+    background-color: #e9ecef;
+    color: #344767;
 }
 
-/* Trạng thái Active (đang chọn) */
 .sidebar .nav-link.active {
-    background-color: var(--apple-active-bg);
-    /* Nền xanh mờ */
-    color: var(--apple-link-blue);
-    /* Chữ xanh */
+    background-color: #ffffff;
+    color: #344767;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    /* Shadow nhẹ nổi bật */
     font-weight: 600;
-    box-shadow: none;
 }
 
-/* Icon */
-.sidebar .nav-link .bi {
-    margin-right: 0.75rem;
-    width: 20px;
-    text-align: center;
-    font-size: 1.1rem;
+.sidebar .nav-link.active i {
+    color: #0d6efd;
+    /* Icon active màu xanh */
 }
 
-/* Mũi tên (Giữ nguyên) */
-.sidebar .nav-link .ms-auto {
-    transition: transform 0.3s;
-}
-
-.sidebar .nav-link[data-bs-toggle="collapse"][aria-expanded="true"] .ms-auto {
-    transform: rotate(180deg);
-}
-
-/* Menu con (Sub-menu) */
-.sidebar .collapse .nav-link {
-    font-size: 0.9rem;
-    padding-left: 2.75rem;
-    background: none;
-    color: var(--apple-text-secondary);
-    /* Xám nhạt */
-    font-weight: 400;
-}
-
-.sidebar .collapse .nav-link.active {
-    background-color: transparent;
-    color: var(--apple-link-blue);
-    /* Chữ xanh */
-    font-weight: 600;
-    box-shadow: none;
-}
-
-/* Hover menu con */
-.sidebar .collapse .nav-link:not(.active):hover {
-    background-color: transparent;
-    color: var(--apple-text-primary);
-    /* Chuyển sang trắng khi hover */
-}
-
-/* Tiêu đề nhóm (ADMIN, BUSINESS) */
+/* Tiêu đề nhóm (Admin, Nghiệp vụ...) */
 .sidebar .nav-link-header {
     font-size: 0.7rem;
     text-transform: uppercase;
-    padding-top: 0.5rem;
-    padding-bottom: 0;
-    color: #888;
-    /* Màu xám cho tiêu đề nhóm */
-    padding-left: 0.75rem;
-    font-weight: 500;
+    color: #8898aa;
+    font-weight: 700;
+    padding: 1rem 0.75rem 0.5rem;
 }
 
-/* Modern Footer Styles */
-.footer {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-top: 1px solid #e2e8f0;
-    padding: 1.5rem 0;
-    margin-left: 280px;
-    margin-top: auto;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.02);
-    transition: margin-left 0.3s ease;
+/* --- TOPBAR --- */
+.topbar {
+    flex-shrink: 0;
+    background-color: var(--sidebar-bg-light);
+    border-bottom: 1px solid var(--sidebar-border-light);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    padding: 0.5rem 1.5rem;
+    z-index: 999;
 }
 
-.footer .container-fluid {
-    padding: 0 2rem;
+.topbar .page-title {
+    color: #344767;
+    font-weight: 700;
 }
 
-.footer-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem;
+/* Nút thông báo & Theme mặc định */
+.topbar .notification-btn {
+    color: #67748e;
+    background: #fff;
+    border: 1px solid #e9ecef;
 }
 
-.footer-mobile {
-    display: none;
+.topbar .notification-btn:hover {
+    background-color: #f8f9fa;
+    color: #344767;
 }
 
-/* Footer Sections */
-.footer-left,
-.footer-center,
-.footer-right {
-    display: flex;
-    align-items: center;
+/* =========================================================
+   4. DARK MODE (KÍCH HOẠT KHI BẤM NÚT)
+   ========================================================= */
+
+/* KHI BẬT DARK MODE: ÁP DỤNG CHO CẢ SIDEBAR VÀ TOPBAR */
+[data-theme="dark"] .sidebar,
+[data-theme="dark"] .topbar {
+    background-color: var(--glass-bg-dark) !important;
+    /* Nền đen kính đậm đà */
+    backdrop-filter: blur(20px) !important;
+    /* Làm mờ nền mạnh */
+    -webkit-backdrop-filter: blur(20px);
+    border-color: var(--glass-border-dark) !important;
+    color: var(--text-primary-dark) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    /* Shadow sâu hơn */
 }
 
-.footer-brand {
-    color: #1e293b;
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
+/* --- XỬ LÝ CHỮ VÀ ICON TRONG DARK MODE --- */
+
+/* 1. Sidebar Links */
+[data-theme="dark"] .sidebar .nav-link {
+    color: var(--text-secondary-dark) !important;
 }
 
-.footer-brand i {
-    font-size: 1.25rem;
-    color: #3b82f6;
+[data-theme="dark"] .sidebar .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
 }
 
-.footer-brand strong {
-    font-weight: 600;
+[data-theme="dark"] .sidebar .nav-link.active {
+    background-color: var(--active-bg-dark) !important;
+    color: var(--active-text-dark) !important;
+    box-shadow: none !important;
 }
 
-.footer-copyright {
-    color: #64748b;
-    font-size: 0.9rem;
+[data-theme="dark"] .sidebar .nav-link.active i {
+    color: var(--active-text-dark) !important;
 }
 
-.footer-developer {
-    color: #64748b;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
+[data-theme="dark"] .sidebar-brand {
+    color: #fff !important;
+    border-bottom-color: var(--glass-border-dark) !important;
 }
 
-.footer-developer i {
-    color: #8b5cf6;
+[data-theme="dark"] .nav-link-header {
+    color: #6c757d !important;
 }
 
-.developer-name {
-    color: #3b82f6;
-    font-weight: 600;
-    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+/* 2. Topbar Elements */
+[data-theme="dark"] .topbar .page-title,
+[data-theme="dark"] .topbar h1,
+[data-theme="dark"] .topbar strong {
+    color: #fff !important;
 }
 
-/* Hover Effects */
-.developer-name {
-    position: relative;
-    transition: all 0.3s ease;
-    cursor: default;
+[data-theme="dark"] .topbar .text-muted,
+[data-theme="dark"] .topbar .text-secondary {
+    color: #adb5bd !important;
+    /* Đổi màu chữ xám tối thành xám sáng */
 }
 
-.developer-name:hover {
-    transform: translateY(-1px);
+/* Nút trên Topbar (Thông báo, Theme) */
+[data-theme="dark"] .topbar .notification-btn,
+[data-theme="dark"] .topbar .btn-light {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
 }
 
-/* Responsive */
-@media (max-width: 992px) {
-    .footer {
-        margin-left: 0;
-    }
+[data-theme="dark"] .topbar .notification-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15) !important;
 }
 
-@media (max-width: 768px) {
-    .footer-content {
-        display: none;
-    }
-
-    .footer-mobile {
-        display: block;
-    }
-
-    .footer {
-        padding: 1.25rem 0;
-    }
-
-    .footer-brand,
-    .footer-copyright,
-    .footer-developer {
-        font-size: 0.85rem;
-    }
+/* 3. Footer Dark Mode */
+[data-theme="dark"] .footer {
+    background-color: #1a1a1a !important;
+    border-top-color: #333 !important;
+    color: #a0a0a0 !important;
 }
 
-/* Dark Mode Support (Optional) */
-@media (prefers-color-scheme: dark) {
-    .footer {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        border-top-color: rgba(255, 255, 255, 0.1);
-    }
-
-    .footer-brand {
-        color: #e2e8f0;
-    }
-
-    .footer-copyright,
-    .footer-developer {
-        color: #94a3b8;
-    }
+/* 4. Dropdown Menu (Avatar) */
+[data-theme="dark"] .custom-dropdown-menu {
+    background-color: #1e1e1e !important;
+    border: 1px solid #333;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
 }
 
-/* Animation */
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+[data-theme="dark"] .custom-dropdown-item {
+    color: #e0e0e0;
 }
 
-.footer {
-    animation: slideUp 0.4s ease;
+[data-theme="dark"] .custom-dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .dropdown-header {
+    color: #888 !important;
+}
+
+/* 5. Giữ nội dung chính (Card, Body) sáng sủa dễ đọc */
+/* Nếu bạn muốn nội dung tối luôn thì comment đoạn dưới này lại */
+[data-theme="dark"] body {
+    background-color: #121212;
+    /* Nền body tối */
+}
+
+[data-theme="dark"] .content-wrapper {
+    background-color: #121212 !important;
+}
+
+/* Các Card vẫn giữ màu trắng nhưng giảm độ chói */
+[data-theme="dark"] .card {
+    background-color: #1e1e1e !important;
+    color: #e0e0e0 !important;
+    border: 1px solid #333 !important;
+}
+
+/* Input Form */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: #2b2b2b;
+    border-color: #444;
+    color: #fff;
+}
+
+[data-theme="dark"] .form-control::placeholder {
+    color: #777;
 }

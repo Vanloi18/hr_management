@@ -3,12 +3,24 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Models\Employee;   // <-- Import Model
-use App\Models\Department; // <-- Import Model liên quan
-use App\Core\Validator; // 1. [THAY ĐỔI] Thêm import Validator
+use App\Models\Employee;
+use App\Models\Department;
+use App\Core\Validator;
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use Mpdf\Mpdf;
 
 class EmployeeController extends Controller
 {
+    // Định nghĩa đường dẫn tương đối để lưu vào DB
+    private const PHOTO_PATH_PREFIX = 'uploads/employees/photos/';
+    private const CONTRACT_PATH_PREFIX = 'uploads/employees/contracts/';
+    
+    // Định nghĩa đường dẫn tuyệt đối để upload file
     private const PHOTO_DIR = BASE_PATH . 'public/uploads/employees/photos/';
     private const CONTRACT_DIR = BASE_PATH . 'public/uploads/employees/contracts/';
 
@@ -22,26 +34,28 @@ class EmployeeController extends Controller
 
     public function index()
     {
-        $this->requireAdmin(); 
+        $this->checkAuthentication(); // Chỉ Admin/HR mới xem được
 
-        // 1. Lấy tham số từ URL
+        // 1. Lấy tham số filter
         $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
         $status  = isset($_GET['status']) ? trim($_GET['status']) : '';
         $dept_id = isset($_GET['department_id']) ? trim($_GET['department_id']) : '';
-        $page    = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        
+        // 2. Phân trang
+        $page   = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         if ($page < 1) $page = 1;
+        $limit  = 10;
+        $offset = ($page - 1) * $limit;
 
-        $limit   = 10;
-        $offset  = ($page - 1) * $limit;
-
-        // 2. Gọi Model
+        // 3. Gọi Model lấy dữ liệu
         $employees = $this->employeeModel->getPaginated($keyword, $status, $dept_id, $limit, $offset);
         $totalRecords = $this->employeeModel->countAll($keyword, $status, $dept_id);
-        $departments = $this->employeeModel->getDepartments(); // Lấy list phòng ban để làm filter
+        
+        // Lấy danh sách phòng ban để hiển thị Select box lọc
+        $departments = (new Department())->all(); 
 
         $totalPages = ceil($totalRecords / $limit);
 
-        // 3. Chuẩn bị dữ liệu
         $data = [
             'title'        => 'Quản lý Nhân viên',
             'employees'    => $employees,
@@ -54,7 +68,6 @@ class EmployeeController extends Controller
             'department_id'=> $dept_id
         ];
 
-        // 4. Xử lý AJAX (Tránh lỗi lồng giao diện)
         if (isAjaxRequest()) {
             return partial('employees/index', $data);
         }
@@ -78,64 +91,61 @@ class EmployeeController extends Controller
         return view('employees/create', $data);
     }
 
-    /**
-     * Xử lý lưu mới (POST /employees) - Đã tái cấu trúc
-     * 2. [THAY ĐỔI] Cập nhật toàn bộ hàm store()
-     */
     public function store()
     {
         $this->checkAuthentication();
 
-        // 1. Validate TEXT trước
+        // 1. Validate dữ liệu
         $validator = new Validator();
         $rules = [
-            'full_name' => 'required',
-            'email' => 'required|email|unique:employees',
-            'job_title' => 'required',
+            'full_name'  => 'required',
+            'email'      => 'required|email|unique:employees',
+            'job_title'  => 'required',
             'start_date' => 'required',
+            'department_id' => 'required'
         ];
         
         if (!$validator->validate($_POST, $rules)) {
-            return; // Validator tự flash lỗi, 'old' data, và redirect
+            // Validator tự động redirect kèm lỗi nếu thất bại
+            return; 
         }
 
-        // 2. Nếu Text OK -> Lấy dữ liệu và Xử lý FILES
-        $data = $validator->validatedData(); // Lấy dữ liệu (sạch) từ Validator
-        $data['department_id'] = !empty($_POST['department_id']) ? $_POST['department_id'] : null;
+        // 2. Chuẩn bị dữ liệu
+        $data = $validator->validatedData();
         $data['status'] = e($_POST['status'] ?? 'probation');
         $data['phone'] = e($_POST['phone'] ?? null);
         $data['photo_path'] = null;
         $data['contract_path'] = null;
 
-        $fileErrors = [];
+        // 3. Xử lý Upload File
         try {
             if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
                 $data['photo_path'] = $this->handleFileUpload(
-                    $_FILES['photo'], self::PHOTO_DIR, 
-                    ['jpg', 'jpeg', 'png', 'gif'], 'uploads/employees/photos/'
+                    $_FILES['photo'], 
+                    self::PHOTO_DIR, 
+                    ['jpg', 'jpeg', 'png', 'gif', 'webp'], 
+                    self::PHOTO_PATH_PREFIX
                 );
             }
             if (isset($_FILES['contract']) && $_FILES['contract']['error'] === UPLOAD_ERR_OK) {
                 $data['contract_path'] = $this->handleFileUpload(
-                    $_FILES['contract'], self::CONTRACT_DIR, 
-                    ['pdf', 'doc', 'docx'], 'uploads/employees/contracts/'
+                    $_FILES['contract'], 
+                    self::CONTRACT_DIR, 
+                    ['pdf', 'doc', 'docx'], 
+                    self::CONTRACT_PATH_PREFIX
                 );
             }
         } catch (\Exception $e) {
-            $fileErrors[] = $e->getMessage();
-        }
-
-        // 3. Nếu File Lỗi -> Quay lại
-        if (!empty($fileErrors)) {
-            $_SESSION['_flash']['errors'] = $fileErrors; // Flash lỗi file
-            $_SESSION['_flash']['old'] = $_POST; // Flash dữ liệu cũ
-            // Xóa file đã lỡ upload
+            // Nếu lỗi upload, xóa file rác (nếu có) và báo lỗi
             $this->deleteFile($data['photo_path']);
             $this->deleteFile($data['contract_path']);
+            
+            flash('error', $e->getMessage());
             redirect('/employees/create');
+            return;
         }
 
-        // 4. Mọi thứ OK -> Lưu CSDL
+        // 4. Lưu vào DB
         $this->employeeModel->create($data);
 
         flash('success', 'Thêm nhân viên mới thành công!');
@@ -152,6 +162,7 @@ class EmployeeController extends Controller
         if (!$employee) {
             flash('error', 'Không tìm thấy nhân viên.');
             redirect('/employees');
+            return;
         }
         
         $departments = (new Department())->all();
@@ -168,163 +179,287 @@ class EmployeeController extends Controller
         return view('employees/edit', $data);
     }
 
-    /**
-     * Xử lý cập nhật (POST /employees/update) - Đã tái cấu trúc
-     * 3. [THAY ĐỔI] Cập nhật toàn bộ hàm update()
-     */
     public function update()
     {
         $this->checkAuthentication();
         $id = $_POST['id'] ?? null;
         if (!$id) redirect('/employees');
 
-        // 1. Validate TEXT
+        // 1. Validate
         $validator = new Validator();
         $rules = [
-            'full_name' => 'required',
-            'email' => 'required|email|unique:employees,' . $id, // Kiểm tra trùng (trừ ID này)
-            'job_title' => 'required',
+            'full_name'  => 'required',
+            'email'      => 'required|email|unique:employees,' . $id, // Bỏ qua ID hiện tại khi check trùng
+            'job_title'  => 'required',
             'start_date' => 'required',
+            'department_id' => 'required'
         ];
         
         if (!$validator->validate($_POST, $rules)) {
-            return; // Validator tự redirect
+            return;
         }
 
-        // 2. Nếu Text OK -> Lấy dữ liệu và Xử lý FILES
+        // 2. Lấy dữ liệu cũ để đối chiếu file
+        $oldEmployee = $this->employeeModel->find($id);
+        
         $data = $validator->validatedData();
-        $data['department_id'] = !empty($_POST['department_id']) ? $_POST['department_id'] : null;
         $data['status'] = e($_POST['status'] ?? 'probation');
         $data['phone'] = e($_POST['phone'] ?? null);
+        $data['photo_path'] = $oldEmployee['photo_path']; // Mặc định giữ nguyên
+        $data['contract_path'] = $oldEmployee['contract_path']; // Mặc định giữ nguyên
 
-        $oldEmployee = $this->employeeModel->find($id);
-        $data['photo_path'] = $oldEmployee['photo_path']; // Giữ ảnh cũ
-        $data['contract_path'] = $oldEmployee['contract_path']; // Giữ hợp đồng cũ
-
+        // 3. Xử lý Upload file mới (nếu có)
         try {
-            // 4. [SỬA] Điền đầy đủ tham số cho handleFileUpload
+            // Ảnh
             if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
-                $data['photo_path'] = $this->handleFileUpload(
+                $newPhoto = $this->handleFileUpload(
                     $_FILES['photo'], 
                     self::PHOTO_DIR, 
-                    ['jpg', 'jpeg', 'png', 'gif'], 
-                    'uploads/employees/photos/'
+                    ['jpg', 'jpeg', 'png', 'gif', 'webp'], 
+                    self::PHOTO_PATH_PREFIX
                 );
-                $this->deleteFile($oldEmployee['photo_path']);
+                $this->deleteFile($oldEmployee['photo_path']); // Xóa ảnh cũ
+                $data['photo_path'] = $newPhoto;
             }
-            // 4. [SỬA] Điền đầy đủ tham số cho handleFileUpload
+
+            // Hợp đồng
             if (isset($_FILES['contract']) && $_FILES['contract']['error'] === UPLOAD_ERR_OK) {
-                $data['contract_path'] = $this->handleFileUpload(
+                $newContract = $this->handleFileUpload(
                     $_FILES['contract'], 
                     self::CONTRACT_DIR, 
                     ['pdf', 'doc', 'docx'], 
-                    'uploads/employees/contracts/'
+                    self::CONTRACT_PATH_PREFIX
                 );
-                $this->deleteFile($oldEmployee['contract_path']);
+                $this->deleteFile($oldEmployee['contract_path']); // Xóa hợp đồng cũ
+                $data['contract_path'] = $newContract;
             }
         } catch (\Exception $e) {
-            flash('error', $e->getMessage()); // Flash lỗi file
+            flash('error', $e->getMessage());
             redirect('/employees/edit?id=' . $id);
+            return;
         }
-        
-        // 3. Mọi thứ OK -> Cập nhật CSDL
+
+        // 4. Update DB
         $this->employeeModel->update($id, $data);
 
-        flash('success', 'Cập nhật hồ sơ nhân viên thành công!');
+        flash('success', 'Cập nhật hồ sơ thành công!');
         redirect('/employees');
     }
 
-
     /**
-     * Xử lý xóa (POST /employees/delete) - PHIÊN BẢN AJAX
-     * (Giữ nguyên)
+     * Xóa nhân viên (Sửa lại để Redirect thay vì JSON)
      */
     public function destroy()
     {
         $this->checkAuthentication();
         
-        // Báo cho trình duyệt biết đây là JSON
-        header('Content-Type: application/json');
+        $id = $_POST['id'] ?? null;
+        if (!$id) {
+            flash('error', 'Thiếu ID nhân viên.');
+            redirect('/employees');
+            return;
+        }
 
         try {
-            $id = $_POST['id'] ?? null;
-            if (!$id) {
-                throw new \Exception('Thiếu ID của nhân viên.');
-            }
-
-            // 1. Lấy thông tin file trước khi xóa CSDL
+            // Lấy thông tin để xóa file vật lý
             $employee = $this->employeeModel->find($id);
 
-            // 2. Xóa CSDL (Gọi Model)
+            // Xóa DB
             $this->employeeModel->delete($id);
 
-            // 3. Xóa file vật lý (nếu có)
+            // Xóa File
             if ($employee) {
                 $this->deleteFile($employee['photo_path']);
                 $this->deleteFile($employee['contract_path']);
             }
-            
-            // Trả về JSON thành công
-            echo json_encode([
-                'success' => true,
-                'message' => 'Đã xóa hồ sơ nhân viên (và các file liên quan).'
-            ]);
-            exit();
 
+            flash('success', 'Đã xóa hồ sơ nhân viên.');
         } catch (\Exception $e) {
-            // Nếu có lỗi, trả về JSON lỗi
-            http_response_code(500);
-            echo json_encode([
-                'success' => false,
-                'message' => $e->getMessage()
-            ]);
-            exit();
+            flash('error', 'Lỗi: ' . $e->getMessage());
         }
+        
+        redirect('/employees');
     }
 
+    /* --- PRIVATE HELPER --- */
 
-    /* --- CÁC HÀM HELPER (HỖ TRỢ) PRIVATE --- */
-    /* (Giữ nguyên các hàm private) */
-
-    /**
-     * Xử lý upload file.
-     * @return string $relativePath Đường dẫn file (tương đối, để lưu vào DB)
-     */
-    private function handleFileUpload($fileInfo, $dir, $allowedExt, $relativePathPrefix)
+    private function handleFileUpload($fileInfo, $uploadDir, $allowedExt, $dbPrefix)
     {
-        if ($fileInfo['error'] !== UPLOAD_ERR_OK) throw new \Exception('File upload bị lỗi.');
+        // Tạo thư mục nếu chưa có
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
 
         $extension = strtolower(pathinfo($fileInfo['name'], PATHINFO_EXTENSION));
         if (!in_array($extension, $allowedExt)) {
-            throw new \Exception('Định dạng file không hợp lệ. Chỉ cho phép: ' . implode(', ', $allowedExt));
+            throw new \Exception('File không hợp lệ. Chỉ chấp nhận: ' . implode(', ', $allowedExt));
         }
-        
-        // (Bạn có thể thêm kiểm tra size file ở đây nếu muốn)
 
-        $fileName = uniqid() . '-' . basename($fileInfo['name']);
-        $destination = $dir . $fileName;
-        $relativePath = $relativePathPrefix . $fileName; 
+        // Tên file: timestamp_uniqid.ext để tránh trùng tuyệt đối
+        $fileName = time() . '_' . uniqid() . '.' . $extension;
+        $destination = $uploadDir . $fileName;
 
         if (move_uploaded_file($fileInfo['tmp_name'], $destination)) {
-            return $relativePath;
-        } else {
-            throw new \Exception('Không thể di chuyển file đã upload.');
+            return $dbPrefix . $fileName; // Trả về đường dẫn tương đối lưu DB
+        }
+
+        throw new \Exception('Không thể lưu file vào server.');
+    }
+
+    private function deleteFile($relativePath)
+    {
+        if (empty($relativePath)) return;
+        $fullPath = BASE_PATH . 'public/' . $relativePath;
+        if (file_exists($fullPath)) {
+            unlink($fullPath);
         }
     }
 
     /**
-     * Xóa 1 file vật lý
+     * Xuất Excel
      */
-    private function deleteFile($relativePath)
+    public function exportExcel()
     {
-        if (empty($relativePath)) return;
-        
-        // $relativePath là 'uploads/...'
-        // Đường dẫn tuyệt đối là BASE_PATH . 'public/' . $relativePath
-        $fullPath = BASE_PATH . 'public/' . $relativePath;
-        
-        if (file_exists($fullPath)) {
-            unlink($fullPath);
+        $this->checkAuthentication();
+
+        // 1. Lấy tham số filter từ URL
+        $keyword = $_GET['keyword'] ?? '';
+        $status  = $_GET['status'] ?? '';
+        $dept_id = $_GET['department_id'] ?? '';
+
+        // 2. Lấy dữ liệu từ Model (Hàm mới tạo ở Bước 1)
+        $employees = $this->employeeModel->getAllForExport($keyword, $status, $dept_id);
+
+        // 3. Khởi tạo Excel
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Danh sách nhân viên');
+
+        // Header
+        $headers = ['ID', 'Họ tên', 'Email', 'SĐT', 'Chức vụ', 'Phòng ban', 'Ngày vào làm', 'Trạng thái'];
+        $sheet->fromArray([$headers], NULL, 'A1');
+
+        // Data
+        $rows = [];
+        foreach ($employees as $emp) {
+            $statusText = match($emp['status']) {
+                'active' => 'Chính thức',
+                'probation' => 'Thử việc',
+                'terminated' => 'Đã nghỉ',
+                default => $emp['status']
+            };
+
+            $rows[] = [
+                $emp['id'],
+                $emp['full_name'],
+                $emp['email'],
+                $emp['phone'],
+                $emp['job_title'],
+                $emp['department_name'],
+                date('d/m/Y', strtotime($emp['start_date'])),
+                $statusText
+            ];
         }
+
+        if (!empty($rows)) {
+            $sheet->fromArray($rows, NULL, 'A2');
+        }
+
+        // Style (Kẻ bảng + Header đẹp)
+        $lastRow = count($rows) + 1;
+        $sheet->getStyle("A1:H{$lastRow}")->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
+        ]);
+        $sheet->getStyle('A1:H1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0d6efd']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+        ]);
+        foreach (range('A', 'H') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
+
+        // Output file
+        $fileName = 'DS_NhanVien_' . date('dmY_Hi') . '.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $fileName . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
+    /**
+     * Xuất PDF
+     */
+    public function exportPDF()
+    {
+        $this->checkAuthentication();
+
+        $keyword = $_GET['keyword'] ?? '';
+        $status  = $_GET['status'] ?? '';
+        $dept_id = $_GET['department_id'] ?? '';
+
+        $employees = $this->employeeModel->getAllForExport($keyword, $status, $dept_id);
+
+        // Tạo nội dung HTML
+        $html = '
+        <html>
+        <head>
+            <style>
+                body { font-family: DejaVu Sans, sans-serif; font-size: 11px; }
+                h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                th { background-color: #0d6efd; color: white; padding: 8px; border: 1px solid #333; font-weight: bold; }
+                td { padding: 8px; border: 1px solid #444; text-align: center; }
+                .text-left { text-align: left; }
+            </style>
+        </head>
+        <body>
+            <h2>DANH SÁCH NHÂN SỰ</h2>
+            <p style="text-align:center">Ngày xuất: ' . date('d/m/Y H:i') . '</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th width="5%">ID</th>
+                        <th width="20%">Họ tên</th>
+                        <th width="20%">Email</th>
+                        <th width="15%">Chức vụ</th>
+                        <th width="15%">Phòng ban</th>
+                        <th width="10%">Ngày vào</th>
+                        <th width="15%">Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>';
+        
+        foreach ($employees as $emp) {
+            $statusText = match($emp['status']) {
+                'active' => 'Chính thức',
+                'probation' => 'Thử việc',
+                'terminated' => 'Đã nghỉ',
+                default => $emp['status']
+            };
+            
+            $html .= '<tr>
+                <td>' . $emp['id'] . '</td>
+                <td class="text-left">' . $emp['full_name'] . '</td>
+                <td class="text-left">' . $emp['email'] . '</td>
+                <td>' . $emp['job_title'] . '</td>
+                <td>' . ($emp['department_name'] ?? '-') . '</td>
+                <td>' . date('d/m/Y', strtotime($emp['start_date'])) . '</td>
+                <td>' . $statusText . '</td>
+            </tr>';
+        }
+
+        $html .= '</tbody></table></body></html>';
+
+        try {
+            // A4 Landscape (Khổ ngang) để hiển thị đủ cột
+            $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4-L']); 
+            $mpdf->WriteHTML($html);
+            $mpdf->Output('DS_NhanVien_' . date('dmY') . '.pdf', 'D');
+        } catch (\Exception $e) {
+            echo "Lỗi xuất PDF: " . $e->getMessage();
+        }
+        exit;
     }
 }

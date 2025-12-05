@@ -3,7 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Models\User;        
+use App\Models\User;
 use App\Core\Validator;
 
 class UserController extends Controller
@@ -46,44 +46,54 @@ class UserController extends Controller
         if (isAjaxRequest()) {
             return partial('users/index', $data);
         }
-
         return view('users/index', $data);
     }
 
     public function create()
     {
         $this->requireAdmin();
-        
-        $data = [
-            'title' => 'Thêm Nhân viên mới'
-        ];
-
-        if (isAjaxRequest()) {
-            return partial('users/create', $data);
-        }
-        return view('users/create', $data);
+        return view('users/create', ['title' => 'Thêm User']);
     }
 
+    /**
+     * XỬ LÝ TẠO MỚI (STORE)
+     */
     public function store()
     {
         $this->requireAdmin();
 
+        // 1. Lấy dữ liệu từ POST
+        $postData = $_POST;
+
+        // 2. Validate
+        $validator = new Validator();
         $rules = [
-            'full_name' => 'required|min:3',
-            'email' => 'required|email|unique:users', 
-            'password' => 'required|min:6',
-            'confirm_password' => 'required|matches:password' 
+            'full_name' => 'required',
+            'email'     => 'required|email|unique:users',
+            'password'  => 'required|min:6',
+            'role'      => 'required',
+            // 'confirm_password' => 'required|matches:password' // Nếu bạn có field này
         ];
 
-        $validator = new Validator();
-        
-        if (!$validator->validate($_POST, $rules)) {
+        if (!$validator->validate($postData, $rules)) {
+            // Validator tự redirect kèm flash errors
             return;
         }
 
-        $this->userModel->create($_POST); 
+        // 3. CHUẨN BỊ DỮ LIỆU SẠCH ĐỂ LƯU DATABASE
+        // (Đây là bước quan trọng để tránh lỗi "Unknown column csrf_token")
+        $dataToSave = [
+            'full_name' => $postData['full_name'],
+            'email'     => $postData['email'],
+            'role'      => $postData['role'],
+            'password'  => password_hash($postData['password'], PASSWORD_DEFAULT),
+            'status'    => 1 // Mặc định hoạt động
+        ];
 
-        flash('success', 'Thêm nhân viên mới thành công!');
+        // 4. Gọi Model
+        $this->userModel->create($dataToSave);
+
+        flash('success', 'Thêm tài khoản thành công!');
         redirect('/users');
     }
 
@@ -91,52 +101,74 @@ class UserController extends Controller
     {
         $this->requireAdmin();
         $id = $_GET['id'] ?? null;
-        if (!$id) redirect('/users'); 
+
+        if (!$id) {
+            flash('error', 'Không tìm thấy ID.');
+            redirect('/users');
+        }
 
         $user = $this->userModel->find($id);
         if (!$user) {
-            flash('error', 'Không tìm thấy nhân viên.');
-            redirect('/users'); 
+            flash('error', 'Người dùng không tồn tại.');
+            redirect('/users');
         }
-        
-        $data = [
-            'title' => 'Chỉnh sửa Nhân viên',
-            'user' => $user
-        ];
 
-        if (isAjaxRequest()) {
-            return partial('users/edit', $data);
-        }
-        return view('users/edit', $data);
+        return view('users/edit', [
+            'title' => 'Chỉnh sửa User',
+            'user'  => $user
+        ]);
     }
 
+    /**
+     * XỬ LÝ CẬP NHẬT (UPDATE)
+     */
     public function update()
     {
         $this->requireAdmin();
-        
-        $data = $_POST;
-        $id = $data['id'] ?? null;
-        if (!$id) redirect('/users');
 
+        $id = $_POST['id'] ?? null;
+        if (!$id) {
+            flash('error', 'Thiếu ID User.');
+            redirect('/users');
+        }
+
+        $postData = $_POST;
+
+        // 1. Validate cơ bản
+        $validator = new Validator();
         $rules = [
-            'full_name' => 'required|min:3',
-            'email' => 'required|email|unique:users,' . $id, 
+            'full_name' => 'required',
+            'email'     => 'required|email|unique:users,' . $id, // Check trùng trừ ID hiện tại
+            'role'      => 'required'
         ];
 
-        if (!empty($data['password'])) {
-            $rules['password'] = 'required|min:6';
-            $rules['confirm_password'] = 'required|matches:password';
+        if (!$validator->validate($postData, $rules)) {
+            // Nếu lỗi, redirect về trang edit hiện tại
+            redirect('/users/edit?id=' . $id);
         }
 
-        $validator = new Validator();
-        
-        if (!$validator->validate($data, $rules)) {
-            return; 
+        // 2. CHUẨN BỊ DỮ LIỆU SẠCH (Lọc bỏ csrf_token tại đây)
+        $dataToUpdate = [
+            'full_name' => $postData['full_name'],
+            'email'     => $postData['email'],
+            'role'      => $postData['role']
+        ];
+
+        // 3. Xử lý mật khẩu (Chỉ cập nhật nếu có nhập)
+        if (!empty($postData['password'])) {
+            if (strlen($postData['password']) < 6) {
+                flash('error', 'Mật khẩu mới phải có ít nhất 6 ký tự.');
+                redirect('/users/edit?id=' . $id);
+            }
+            // Nếu có nhập mật khẩu mới thì thêm vào mảng update
+            $dataToUpdate['password'] = password_hash($postData['password'], PASSWORD_DEFAULT);
         }
 
-        $this->userModel->update($id, $data);
+        // 4. Gọi Model để update
+        // (Lúc này $dataToUpdate chỉ chứa các cột có thật trong DB -> Không bị lỗi nữa)
+        $this->userModel->update($id, $dataToUpdate);
 
-        flash('success', 'Cập nhật thông tin nhân viên thành công!');
+        flash('success', 'Cập nhật thông tin thành công!');
         redirect('/users');
     }
 
@@ -144,25 +176,48 @@ class UserController extends Controller
     {
         $this->requireAdmin();
         
+        // Luôn trả về JSON
         header('Content-Type: application/json');
 
         try {
+            // 1. Nhận dữ liệu
             $id = $_POST['id'] ?? null;
+            $tokenFromPost = $_POST['csrf_token'] ?? '';
+            $tokenFromSession = $_SESSION['csrf_token'] ?? '';
+
+            // Ghi log để debug (Kiểm tra file C:\xampp\apache\logs\error.log nếu lỗi)
+            error_log("DELETE USER: ID=$id | TokenPost=$tokenFromPost | TokenSession=$tokenFromSession");
+
+            // 2. Kiểm tra ID
             if (!$id) {
-                throw new \Exception('Thiếu ID của User.');
+                throw new \Exception('Thiếu ID người dùng.');
             }
 
+            // 3. Kiểm tra User có tồn tại không
+            $user = $this->userModel->find($id);
+            if (!$user) {
+                throw new \Exception('Người dùng không tồn tại hoặc đã bị xóa.');
+            }
+
+            // 4. Kiểm tra CSRF (Bảo mật)
+            if (empty($tokenFromSession) || $tokenFromPost !== $tokenFromSession) {
+                // Tạm thời comment dòng dưới nếu bạn muốn test bỏ qua bảo mật
+                throw new \Exception('Lỗi bảo mật: CSRF Token không khớp. Vui lòng F5 lại trang.');
+            }
+
+            // 5. Chặn xóa chính mình
             if ((int)$id === (int)$_SESSION['user']['id']) {
-                throw new \Exception('Bạn không thể tự xóa tài khoản Admin của chính mình.');
+                throw new \Exception('Bạn không thể xóa tài khoản đang đăng nhập.');
             }
 
+            // 6. Thực hiện xóa
             $this->userModel->delete($id);
 
-            echo json_encode(['success' => true, 'message' => 'Đã xóa nhân viên thành công.']);
+            echo json_encode(['success' => true, 'message' => 'Xóa thành công.']);
             exit();
 
         } catch (\Exception $e) {
-            http_response_code(403);
+            // Trả về HTTP 200 nhưng success = false để JS xử lý alert
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
             exit();
         }

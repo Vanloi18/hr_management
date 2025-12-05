@@ -170,4 +170,39 @@ class Employee extends Model
     public function getDepartments() {
         return $this->db->query("SELECT id, name FROM departments ORDER BY name ASC")->fetchAll();
     }
+
+    /**
+     * Lấy toàn bộ danh sách nhân viên theo bộ lọc (Dùng cho Export)
+     */
+    public function getAllForExport($keyword = '', $status = '', $department_id = '')
+    {
+        $sql = "SELECT e.*, d.name as department_name 
+                FROM employees e 
+                LEFT JOIN departments d ON e.department_id = d.id 
+                WHERE 1=1";
+        
+        $params = [];
+
+        if (!empty($keyword)) {
+            $sql .= " AND (e.full_name LIKE ? OR e.email LIKE ? OR e.id LIKE ?)";
+            $keywordParam = "%$keyword%";
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+        }
+
+        if (!empty($status)) {
+            $sql .= " AND e.status = ?";
+            $params[] = $status;
+        }
+
+        if (!empty($department_id)) {
+            $sql .= " AND e.department_id = ?";
+            $params[] = $department_id;
+        }
+
+        $sql .= " ORDER BY e.id DESC"; // Không có LIMIT/OFFSET
+
+        return $this->db->query($sql, $params)->fetchAll();
+    }
 }

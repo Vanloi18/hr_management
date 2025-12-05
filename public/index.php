@@ -19,6 +19,8 @@
     // --- ROUTE CHO PROFILE (HỒ SƠ CÁ NHÂN) ---
     $router->get('/profile', 'ProfileController@index');        
     $router->post('/profile/update', 'ProfileController@update');
+    $router->post('/profile/update-info', 'ProfileController@updateInfo'); 
+    $router->post('/profile/change-password', 'ProfileController@changePassword'); 
 
     // ----- Routes cho Quản lý Nhân viên (chỉ Admin) -----
     $router->get('/users', 'UserController@index');       
@@ -44,6 +46,8 @@
     $router->get('/employees/edit', 'EmployeeController@edit');
     $router->post('/employees/update', 'EmployeeController@update');
     $router->post('/employees/delete', 'EmployeeController@destroy');
+    $router->get('/employees/export-excel', 'EmployeeController@exportExcel');
+    $router->get('/employees/export-pdf', 'EmployeeController@exportPDF');
 
     // ----- Routes cho Quản lý Nhà tuyển dụng (Admin & HR) -----
     $router->get('/recruiters', 'RecruiterController@index');
@@ -76,9 +80,19 @@
     $router->get('/candidates/edit', 'CandidateController@edit');
     $router->post('/candidates/update', 'CandidateController@update');
     $router->post('/candidates/delete', 'CandidateController@destroy');
+    $router->get('/candidates/export-excel', 'CandidateController@exportExcel');
+    $router->get('/candidates/export-pdf', 'CandidateController@exportPDF');
 
     // ----- Routes cho Thống kê (Admin & HR) -----
     $router->get('/statistics', 'StatisticsController@index');
+    $router->get('/statistics/export-excel', 'StatisticsController@exportExcel');
+    $router->get('/statistics/export-pdf', 'StatisticsController@exportPDF');
+
+    // Routes cho Cài đặt (Settings)
+    $router->get('/settings', 'SettingController@index');
+    $router->post('/settings/update', 'SettingController@update');
+    // Xử lý POST từng tab
+    $router->post('/settings/update', 'SettingController@update'); // Tab 1: Cài đặt chung
 
     // ----- Route mặc định (Trang chủ / Dashboard) -----
     $router->get('/', 'DashboardController@index');

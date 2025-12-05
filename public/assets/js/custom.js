@@ -194,3 +194,42 @@ document.addEventListener('DOMContentLoaded', function () {
     updateActiveLinks(window.location.href);
 
 });
+document.addEventListener('DOMContentLoaded', function () {
+    const toggleBtn = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const html = document.documentElement;
+
+    // 1. Kiểm tra LocalStorage khi tải trang
+    const currentTheme = localStorage.getItem('theme');
+
+    if (currentTheme === 'dark') {
+        html.setAttribute('data-theme', 'dark');
+        themeIcon.classList.replace('bi-moon-stars', 'bi-sun-fill');
+        themeIcon.classList.add('text-warning'); // Màu vàng cho mặt trời
+    }
+
+    // 2. Sự kiện Click nút đổi theme
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function () {
+            const isDark = html.getAttribute('data-theme') === 'dark';
+
+            if (isDark) {
+                // Chuyển sang Sáng
+                html.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+
+                // Đổi icon về mặt trăng
+                themeIcon.classList.replace('bi-sun-fill', 'bi-moon-stars');
+                themeIcon.classList.remove('text-warning');
+            } else {
+                // Chuyển sang Tối
+                html.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+
+                // Đổi icon thành mặt trời
+                themeIcon.classList.replace('bi-moon-stars', 'bi-sun-fill');
+                themeIcon.classList.add('text-warning');
+            }
+        });
+    }
+});

@@ -8,7 +8,6 @@ $full_name = $full_name ?? $_SESSION['user']['full_name'] ?? 'Admin';
 
 <div class="container-fluid py-4">
     
-    <!-- Welcome Banner -->
     <div class="welcome-banner card border-0 shadow-lg rounded-4 overflow-hidden mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
         <div class="card-body p-4 p-md-5 position-relative">
             <div class="welcome-bg position-absolute" style="top: -50px; right: -50px; width: 300px; height: 300px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
@@ -49,7 +48,6 @@ $full_name = $full_name ?? $_SESSION['user']['full_name'] ?? 'Admin';
         </div>
     </div>
 
-    <!-- Section Title -->
     <div class="section-header mb-4">
         <h4 class="fw-bold mb-2">
             <i class="bi bi-lightning-fill text-warning me-2"></i>Lối tắt nhanh
@@ -57,10 +55,8 @@ $full_name = $full_name ?? $_SESSION['user']['full_name'] ?? 'Admin';
         <p class="text-muted mb-0">Truy cập nhanh các chức năng thường dùng</p>
     </div>
 
-    <!-- Quick Access Cards -->
     <div class="row g-4">
 
-        <!-- Card 1: Thêm Nhân viên -->
         <div class="col-lg-3 col-md-6">
             <div class="quick-card card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
                 <div class="card-gradient position-absolute w-100 h-100" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.05) 100%);"></div>
@@ -80,15 +76,9 @@ $full_name = $full_name ?? $_SESSION['user']['full_name'] ?? 'Admin';
                         <i class="bi bi-arrow-right-circle-fill me-2"></i> Bắt đầu
                     </a>
                 </div>
-                <div class="card-footer bg-transparent border-0 py-2 text-center">
-                    <small class="text-muted">
-                        <i class="bi bi-people me-1"></i>Quản lý nhân sự
-                    </small>
-                </div>
             </div>
         </div>
 
-        <!-- Card 2: Thêm Ứng viên -->
         <div class="col-lg-3 col-md-6">
             <div class="quick-card card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
                 <div class="card-gradient position-absolute w-100 h-100" style="background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.05) 100%);"></div>
@@ -108,15 +98,9 @@ $full_name = $full_name ?? $_SESSION['user']['full_name'] ?? 'Admin';
                         <i class="bi bi-arrow-right-circle-fill me-2"></i> Bắt đầu
                     </a>
                 </div>
-                <div class="card-footer bg-transparent border-0 py-2 text-center">
-                    <small class="text-muted">
-                        <i class="bi bi-person-badge me-1"></i>Tuyển dụng
-                    </small>
-                </div>
             </div>
         </div>
 
-        <!-- Card 3: Xem Báo cáo -->
         <div class="col-lg-3 col-md-6">
             <div class="quick-card card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
                 <div class="card-gradient position-absolute w-100 h-100" style="background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.05) 100%);"></div>
@@ -136,15 +120,9 @@ $full_name = $full_name ?? $_SESSION['user']['full_name'] ?? 'Admin';
                         <i class="bi bi-arrow-right-circle-fill me-2"></i> Bắt đầu
                     </a>
                 </div>
-                <div class="card-footer bg-transparent border-0 py-2 text-center">
-                    <small class="text-muted">
-                        <i class="bi bi-graph-up me-1"></i>Thống kê
-                    </small>
-                </div>
             </div>
         </div>
 
-        <!-- Card 4: Quản lý Phòng ban -->
         <div class="col-lg-3 col-md-6">
             <div class="quick-card card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
                 <div class="card-gradient position-absolute w-100 h-100" style="background: linear-gradient(135deg, rgba(250, 112, 154, 0.1) 0%, rgba(254, 225, 64, 0.05) 100%);"></div>
@@ -164,22 +142,16 @@ $full_name = $full_name ?? $_SESSION['user']['full_name'] ?? 'Admin';
                         <i class="bi bi-arrow-right-circle-fill me-2"></i> Bắt đầu
                     </a>
                 </div>
-                <div class="card-footer bg-transparent border-0 py-2 text-center">
-                    <small class="text-muted">
-                        <i class="bi bi-building me-1"></i>Tổ chức
-                    </small>
-                </div>
             </div>
         </div>
 
     </div>
 
-    <!-- Additional Quick Links -->
     <div class="row mt-4">
         <div class="col-12">
-            <div class="card border-0 shadow-sm rounded-4">
+            <div class="card links-card border-0 shadow-sm rounded-4">
                 <div class="card-body p-4">
-                    <h6 class="fw-bold mb-3">
+                    <h6 class="fw-bold mb-3 section-title-text">
                         <i class="bi bi-link-45deg text-primary me-2"></i>Liên kết nhanh khác:
                     </h6>
                     <div class="d-flex flex-wrap gap-2">
@@ -201,18 +173,17 @@ $full_name = $full_name ?? $_SESSION['user']['full_name'] ?? 'Admin';
         </div>
     </div>
 
-    <!-- Tips Section -->
     <div class="row mt-4">
         <div class="col-12">
-            <div class="card border-0 shadow-sm rounded-4" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+            <div class="card tips-card border-0 shadow-sm rounded-4" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
                 <div class="card-body p-4">
                     <div class="d-flex align-items-start">
                         <div class="flex-shrink-0">
-                            <i class="bi bi-lightbulb-fill text-warning" style="font-size: 2.5rem;"></i>
+                            <i class="bi bi-lightbulb-fill text-warning tips-icon" style="font-size: 2.5rem;"></i>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h6 class="fw-bold mb-2">💡 Mẹo sử dụng:</h6>
-                            <ul class="mb-0 ps-3">
+                            <h6 class="fw-bold mb-2 tips-title">💡 Mẹo sử dụng:</h6>
+                            <ul class="mb-0 ps-3 tips-list">
                                 <li class="mb-1">Sử dụng thanh tìm kiếm để tìm kiếm nhanh ứng viên hoặc nhân viên</li>
                                 <li class="mb-1">Kiểm tra báo cáo thống kê hàng tuần để theo dõi hiệu quả tuyển dụng</li>
                                 <li>Cập nhật thông tin nhân viên thường xuyên để đảm bảo dữ liệu chính xác</li>
@@ -295,77 +266,101 @@ $full_name = $full_name ?? $_SESSION['user']['full_name'] ?? 'Admin';
 
     /* ===== ANIMATIONS ===== */
     @keyframes fadeInDown {
-        from {
-            opacity: 0;
-            transform: translateY(-30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(-30px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
     @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
     @keyframes float {
-        0%, 100% {
-            transform: translate(0, 0) scale(1);
-        }
-        50% {
-            transform: translate(20px, 20px) scale(1.1);
-        }
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(20px, 20px) scale(1.1); }
     }
 
     /* ===== RESPONSIVE ===== */
     @media (max-width: 768px) {
-        .welcome-banner h2 {
-            font-size: 1.5rem;
-        }
-        
-        .welcome-banner p {
-            font-size: 0.9rem;
-        }
-        
-        .icon-circle {
-            width: 60px;
-            height: 60px;
-        }
-        
-        .icon-circle i {
-            font-size: 1.5rem !important;
-        }
-        
-        .card-title {
-            font-size: 1rem;
-        }
-        
-        .welcome-bg {
-            width: 150px !important;
-            height: 150px !important;
-        }
+        .welcome-banner h2 { font-size: 1.5rem; }
+        .welcome-banner p { font-size: 0.9rem; }
+        .icon-circle { width: 60px; height: 60px; }
+        .icon-circle i { font-size: 1.5rem !important; }
+        .card-title { font-size: 1rem; }
+        .welcome-bg { width: 150px !important; height: 150px !important; }
     }
 
     /* ===== ADDITIONAL ANIMATIONS ===== */
-    .btn {
-        transition: all 0.3s ease;
-    }
+    .btn { transition: all 0.3s ease; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+    .card { transition: all 0.3s ease; }
+
+    /* =========================================================
+       🔥🔥 DARK MODE OVERRIDES (QUAN TRỌNG) 🔥🔥
+       ========================================================= */
     
-    .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    /* 1. Tiêu đề mục (Lối tắt nhanh) */
+    [data-theme="dark"] .section-header h4 {
+        color: #fff !important;
     }
-    
-    .card {
-        transition: all 0.3s ease;
+    [data-theme="dark"] .section-header p.text-muted {
+        color: #a0a0a5 !important;
+    }
+
+    /* 2. Các thẻ Quick Cards (Thêm nhân viên, Thêm ứng viên...) */
+    [data-theme="dark"] .quick-card {
+        background-color: #1e1e1e !important; /* Nền card tối */
+        border: 1px solid #333 !important;
+    }
+    [data-theme="dark"] .quick-card .card-title {
+        color: #fff !important; /* Tên chức năng màu trắng */
+    }
+    [data-theme="dark"] .quick-card .text-muted {
+        color: #b0b0b5 !important; /* Mô tả màu xám sáng */
+    }
+    /* Gradient mờ đi trong dark mode để đỡ chói */
+    [data-theme="dark"] .card-gradient {
+        opacity: 0.05 !important;
+    }
+
+    /* 3. Thẻ Liên kết nhanh (Links Card) */
+    [data-theme="dark"] .links-card {
+        background-color: #1e1e1e !important;
+        border: 1px solid #333 !important;
+    }
+    [data-theme="dark"] .section-title-text {
+        color: #fff !important;
+    }
+    /* Đổi màu các nút outline để dễ đọc hơn */
+    [data-theme="dark"] .btn-outline-primary,
+    [data-theme="dark"] .btn-outline-success,
+    [data-theme="dark"] .btn-outline-info,
+    [data-theme="dark"] .btn-outline-warning {
+        color: #e0e0e0 !important;
+        border-color: #555 !important;
+    }
+    [data-theme="dark"] .btn-outline-primary:hover,
+    [data-theme="dark"] .btn-outline-success:hover,
+    [data-theme="dark"] .btn-outline-info:hover,
+    [data-theme="dark"] .btn-outline-warning:hover {
+        color: #fff !important;
+        background-color: #333 !important;
+    }
+
+    /* 4. Thẻ Mẹo sử dụng (Tips Card) */
+    [data-theme="dark"] .tips-card {
+        /* Chuyển từ gradient cam sáng sang gradient tối sang trọng */
+        background: linear-gradient(135deg, #2c1a12 0%, #3e2015 100%) !important;
+        border: 1px solid #5c3015 !important;
+    }
+    [data-theme="dark"] .tips-title {
+        color: #ffb74d !important; /* Màu cam nhạt nổi bật */
+    }
+    [data-theme="dark"] .tips-list {
+        color: #e0e0e0 !important;
+    }
+    [data-theme="dark"] .tips-icon {
+        color: #ffb74d !important;
     }
 </style>
 

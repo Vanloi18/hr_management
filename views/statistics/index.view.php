@@ -4,8 +4,8 @@
     
     <!-- Page Header -->
     <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex align-items-center">
+    <div class="col-12">
+        <div class="d-flex align-items-center justify-content-between"> <div class="d-flex align-items-center">
                 <div class="dashboard-icon bg-primary bg-opacity-10 rounded-3 p-3 me-3">
                     <i class="bi bi-speedometer2 text-primary" style="font-size: 2rem;"></i>
                 </div>
@@ -17,8 +17,19 @@
                     </p>
                 </div>
             </div>
+
+            <div class="btn-group shadow-sm">
+                <a href="<?php echo BASE_URL; ?>/statistics/export-excel" class="btn btn-success text-white">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                </a>
+                <a href="<?php echo BASE_URL; ?>/statistics/export-pdf" class="btn btn-danger text-white">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                </a>
+            </div>
+            
         </div>
     </div>
+</div>
 
     <!-- Statistics Cards -->
     <div class="row g-4 mb-4">
