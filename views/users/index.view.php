@@ -155,10 +155,11 @@
                                                 <i class="bi bi-pencil-fill"></i>
                                             </a>
                                             
-                                            <?php if($user['id'] != $_SESSION['user']['id']): ?>
+                                           <?php if($user['id'] != $_SESSION['user']['id']): ?>
                                                 <button type="button" 
                                                         class="btn btn-icon btn-light text-danger rounded-circle btn-delete-user"
                                                         data-id="<?php echo e($user['id']); ?>"
+                                                        data-url="<?php echo BASE_URL; ?>/users/delete" 
                                                         data-bs-toggle="tooltip" title="Xóa tài khoản">
                                                     <i class="bi bi-trash-fill"></i>
                                                 </button>
@@ -223,62 +224,3 @@
     [data-theme="dark"] .pagination .page-link { background-color: #2b2b2b; border-color: #444; color: #fff; }
     [data-theme="dark"] .pagination .page-item.active .page-link { background-color: #0d6efd; border-color: #0d6efd; }
 </style>
-
-<script>
-    // 1. Kích hoạt Tooltip
-    document.addEventListener('DOMContentLoaded', function() {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-
-    // 2. Xử lý Xóa User (Sử dụng Event Delegation - Cách chuẩn nhất)
-    document.addEventListener('click', function(e) {
-        // Tìm nút xóa (hoặc icon bên trong nó)
-        const button = e.target.closest('.btn-delete-user');
-        
-        // Nếu không phải nút xóa thì bỏ qua
-        if (!button) return;
-
-        // Ngăn hành vi mặc định
-        e.preventDefault();
-
-        // Hỏi xác nhận
-        if(!confirm('CẢNH BÁO: Hành động này không thể hoàn tác.\nBạn có chắc chắn muốn xóa tài khoản này không?')) {
-            return;
-        }
-
-        const id = button.dataset.id;
-        const row = document.getElementById('row-user-' + id);
-        // Lấy Token từ PHP Session
-        const csrfToken = '<?php echo $_SESSION['csrf_token'] ?? ''; ?>';
-
-        // Hiệu ứng mờ dòng đang xóa
-        if(row) row.style.opacity = '0.5';
-
-        // Gửi Ajax
-        fetch('<?php echo BASE_URL; ?>/users/delete', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'id=' + encodeURIComponent(id) + '&csrf_token=' + encodeURIComponent(csrfToken)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                if(row) row.remove();
-                alert('Thành công: ' + data.message);
-            } else {
-                if(row) row.style.opacity = '1';
-                alert('Lỗi: ' + data.message);
-            }
-        })
-        .catch(error => {
-            if(row) row.style.opacity = '1';
-            console.error('Lỗi chi tiết:', error);
-            alert('Lỗi kết nối server. Vui lòng thử lại.');
-        });
-    });
-</script>

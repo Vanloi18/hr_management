@@ -102,10 +102,16 @@
                                                 <i class="bi bi-pencil-fill"></i>
                                             </a>
                                             
-                                            <form action="<?php echo BASE_URL; ?>/departments/delete" method="POST" class="d-inline delete-form">
+                                            <form action="<?php echo BASE_URL; ?>/departments/delete" 
+                                                method="POST" 
+                                                class="d-inline form-delete-ajax" 
+                                                data-row-id="row-dept-<?php echo $dept['id']; ?>"
+                                                data-confirm="Cảnh báo: Xóa phòng ban sẽ ảnh hưởng đến nhân sự thuộc phòng ban này.\nBạn có chắc chắn muốn xóa?">
+                                                
                                                 <input type="hidden" name="id" value="<?php echo e($dept['id']); ?>">
                                                 <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
-                                                <button type="button" class="btn btn-icon btn-light text-danger rounded-circle btn-delete" data-bs-toggle="tooltip" title="Xóa">
+                                                
+                                                <button type="submit" class="btn btn-icon btn-light text-danger rounded-circle" data-bs-toggle="tooltip" title="Xóa">
                                                     <i class="bi bi-trash-fill"></i>
                                                 </button>
                                             </form>
@@ -201,7 +207,6 @@
         });
     });
 
-    // 2. Xóa Phòng Ban (Event Delegation)
     document.addEventListener('click', function(e) {
         // Tìm nút xóa
         const button = e.target.closest('.btn-delete');

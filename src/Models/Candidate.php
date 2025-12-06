@@ -74,27 +74,35 @@ class Candidate extends Model
         $result = $this->db->query($sql, $params)->fetch();
         return $result ? (int)$result['total'] : 0;
     }
-    
-    /**
-     * Helper: Lấy danh sách Vị trí tuyển dụng để nạp vào Dropdown lọc
-     */
+
+
     public function getPositionsList() {
         return $this->db->query("SELECT id, title FROM positions ORDER BY title ASC")->fetchAll();
     }
-
-    // --- CÁC HÀM CŨ (CREATE, FIND, UPDATE, DELETE) ---
-    // Bạn giữ lại các hàm CRUD cũ của bạn ở dưới đây. 
-    // Nếu bạn chưa có, tôi sẽ thêm các hàm cơ bản để code không bị lỗi khi gọi create/delete
     
     public function create($data)
-{
-    $sql = "INSERT INTO candidates 
-    (position_id, full_name, email, phone, cv_file_path, status, notes, applied_at) 
-    VALUES 
-    (:position_id, :full_name, :email, :phone, :cv_file_path, :status, :notes, NOW())";
+    {
+        $sql = "INSERT INTO candidates 
+        (position_id, full_name, email, phone, cv_file_path, status, notes, interview_date, interview_location, applied_at) 
+        VALUES 
+        (:position_id, :full_name, :email, :phone, :cv_file_path, :status, :notes, :interview_date, :interview_location, :applied_at)";
 
-    return $this->db->query($sql, $data);
-}
+        // Tạo mảng params thủ công để tránh lỗi "Invalid parameter number" do thừa key
+        $params = [
+            'position_id' => $data['position_id'],
+            'full_name'   => $data['full_name'],
+            'email'       => $data['email'],
+            'phone'       => $data['phone'],
+            'cv_file_path'=> $data['cv_file_path'],
+            'status'      => $data['status'],
+            'notes'       => $data['notes'] ?? null,
+            'interview_date' => $data['interview_date'] ?? null,
+            'interview_location' => $data['interview_location'] ?? null,
+            'applied_at'  => $data['applied_at'] ?? date('Y-m-d H:i:s')
+        ];
+
+        return $this->db->query($sql, $params);
+    }
 
 
     public function find($id)
@@ -109,9 +117,31 @@ class Candidate extends Model
 
     public function update($id, $data)
     {
-        // Logic update tùy thuộc vào form của bạn, đây là ví dụ cập nhật trạng thái
-        $sql = "UPDATE candidates SET status = :status WHERE id = :id";
-        return $this->db->query($sql, ['status' => $data['status'], 'id' => $id]);
+        // [FIX LỖI] Cập nhật đầy đủ thông tin (Code cũ chỉ cập nhật mỗi status)
+        $sql = "UPDATE candidates SET 
+                position_id = :position_id,
+                full_name   = :full_name,
+                email       = :email,
+                phone       = :phone,
+                status      = :status,
+                notes       = :notes,
+                interview_date = :interview_date,
+                interview_location = :interview_location
+                WHERE id = :id";
+        
+        $params = [
+            'id'          => $id,
+            'position_id' => $data['position_id'],
+            'full_name'   => $data['full_name'],
+            'email'       => $data['email'],
+            'phone'       => $data['phone'],
+            'status'      => $data['status'],
+            'notes'       => $data['notes'] ?? null,
+            'interview_date' => $data['interview_date'] ?? null,
+            'interview_location' => $data['interview_location'] ?? null
+        ];
+
+        return $this->db->query($sql, $params);
     }
 
     public function delete($id)

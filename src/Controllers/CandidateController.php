@@ -6,6 +6,7 @@ use App\Core\Controller;
 use App\Models\Candidate; 
 use App\Models\Position; 
 use App\Models\Employee;
+use App\Models\Department;
 use App\Core\Validator; 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -20,10 +21,9 @@ use Mpdf\Mpdf;
 
 class CandidateController extends Controller
 {
-    // Dùng BASE_PATH để tạo đường dẫn vật lý tuyệt đối
     private const CV_UPLOAD_DIR = BASE_PATH . 'public/uploads/cvs/';
     private const ALLOWED_EXTENSIONS = ['pdf', 'doc', 'docx'];
-    private const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+    private const MAX_FILE_SIZE = 5 * 1024 * 1024; 
 
     protected $candidateModel;
     protected $positionModel;
@@ -131,7 +131,9 @@ class CandidateController extends Controller
         $data = $validator->validatedData();
         $data['status'] = e($_POST['status'] ?? 'applied'); // Mặc định là applied (đã nộp) hoặc pending
         $data['notes'] = e($_POST['notes'] ?? null);
-        $data['applied_at'] = date('Y-m-d H:i:s'); // Ghi lại ngày nộp
+        $data['applied_at'] = date('Y-m-d H:i:s'); 
+        $data['interview_date'] = null;
+        $data['interview_location'] = null;
 
         try {
             $data['cv_file_path'] = $this->handleFileUpload($file_info);
@@ -175,7 +177,7 @@ class CandidateController extends Controller
         return view('candidates/edit', $data);
     }
 
-    // [Hàm UPDATE]
+    
     public function update()
 {
     $this->checkAuthentication();
@@ -219,10 +221,23 @@ class CandidateController extends Controller
     $data['interview_location'] = $data['status'] === 'interviewing' ? $_POST['interview_location'] : null;
     $this->candidateModel->update($id, $data);
 
-    if ($data['status'] === 'interviewing' && $oldCandidate['status'] !== 'interviewing') {
-        $updatedCandidate = $this->candidateModel->find($id);
-        $this->sendInterviewEmail($updatedCandidate);
-    }
+    // 1. Gửi email nếu chuyển sang phỏng vấn
+        if ($data['status'] === 'interviewing' && $oldCandidate['status'] !== 'interviewing') {
+            $updatedCandidate = $this->candidateModel->find($id);
+            $this->sendInterviewEmail($updatedCandidate);
+        }
+
+        // [MỚI] 2. Gửi email thông báo kết quả (Trúng tuyển hoặc Từ chối)
+        if (in_array($data['status'], ['hired', 'rejected']) && $data['status'] !== $oldCandidate['status']) {
+            $updatedCandidate = $this->candidateModel->find($id); // Lấy lại thông tin đầy đủ (kèm tên vị trí)
+            $this->sendResultEmail($updatedCandidate, $data['status']);
+        }
+
+        // 3. Tạo nhân viên nếu chuyển sang Hired
+        if ($data['status'] === 'hired' && $oldCandidate['status'] !== 'hired') {
+            $this->promoteToEmployee($data, $oldCandidate['cv_file_path']);
+            return; 
+        }
 
     if ($data['status'] === 'hired' && $oldCandidate['status'] !== 'hired') {
 
@@ -232,14 +247,18 @@ class CandidateController extends Controller
         $position = $this->positionModel->find($data['position_id']);
         $jobTitle = $position['title'] ?? 'Chưa xác định';
 
+        $deptModel = new Department();
+        $allDepts = $deptModel->all(); 
+        $deptId = !empty($allDepts) ? $allDepts[0]['id'] : null;
+
         $employeeData = [
             'full_name'      => $data['full_name'],
             'email'          => $data['email'],
             'phone'          => $data['phone'],
             'job_title'      => $jobTitle,
-            'department_id'  => 1,
+            'department_id'  => $deptId,
             'start_date'     => date('Y-m-d'),
-            'status'         => 'active',
+            'status'         => 'probation', 
             'photo_path'     => null,
             'contract_path'  => $oldCandidate['cv_file_path'], 
         ];
@@ -529,6 +548,111 @@ class CandidateController extends Controller
         } catch (\Exception $e) {
             echo "Lỗi xuất PDF: " . $e->getMessage();
         }
+        exit;
+    }
+    // --- HÀM GỬI EMAIL KẾT QUẢ (MỚI) ---
+    private function sendResultEmail($candidate, $status)
+    {
+        $mail = new PHPMailer(true);
+
+        try {
+            // Cấu hình Server (Giống hàm sendInterviewEmail)
+            $mail->isSMTP();
+            $mail->Host       = SMTP_HOST;
+            $mail->SMTPAuth   = true;
+            $mail->Username   = SMTP_USERNAME;
+            $mail->Password   = SMTP_PASSWORD;
+            $mail->SMTPSecure = SMTP_SECURE;
+            $mail->Port       = SMTP_PORT;
+
+            // Người gửi - Người nhận
+            $mail->setFrom(SMTP_USERNAME, MAIL_FROM_NAME);
+            $mail->addAddress($candidate['email'], $candidate['full_name']);
+
+            $mail->isHTML(true);
+            $mail->CharSet = 'UTF-8';
+
+            // Xử lý nội dung thư theo trạng thái
+            if ($status === 'hired') {
+                // --- KỊCH BẢN TRÚNG TUYỂN ---
+                $mail->Subject = '[HR System] Chúc mừng! Thư mời nhận việc - ' . ($candidate['position_title'] ?? 'Vị trí mới');
+                $mail->Body = "
+                    <p>Chào bạn <b>{$candidate['full_name']}</b>,</p>
+                    <p>Chúc mừng bạn! Chúng tôi rất vui mừng thông báo rằng bạn đã trúng tuyển vị trí <b>" . ($candidate['position_title'] ?? 'N/A') . "</b> tại công ty.</p>
+                    <p>Bộ phận Nhân sự đã tạo hồ sơ nhân viên cho bạn và sẽ liên hệ sớm nhất để hướng dẫn các thủ tục nhận việc.</p>
+                    <p>Chào mừng bạn gia nhập đội ngũ của chúng tôi!</p>
+                    <hr>
+                    <p style='color:#666; font-size:12px'>Trân trọng,<br>Bộ phận Tuyển dụng</p>
+                ";
+            } elseif ($status === 'rejected') {
+                // --- KỊCH BẢN TỪ CHỐI ---
+                $mail->Subject = '[HR System] Thông báo kết quả tuyển dụng - ' . ($candidate['position_title'] ?? '');
+                $mail->Body = "
+                    <p>Chào bạn <b>{$candidate['full_name']}</b>,</p>
+                    <p>Cảm ơn bạn đã dành thời gian quan tâm và ứng tuyển vào vị trí <b>" . ($candidate['position_title'] ?? 'N/A') . "</b>.</p>
+                    <p>Sau khi xem xét kỹ lưỡng hồ sơ và kết quả phỏng vấn, chúng tôi rất tiếc phải thông báo rằng hiện tại hồ sơ của bạn chưa phù hợp với yêu cầu của vị trí này.</p>
+                    <p>Chúng tôi sẽ lưu hồ sơ của bạn trong cơ sở dữ liệu và sẽ liên hệ lại nếu có vị trí phù hợp hơn trong tương lai.</p>
+                    <p>Chúc bạn sớm tìm được công việc như ý!</p>
+                    <hr>
+                    <p style='color:#666; font-size:12px'>Trân trọng,<br>Bộ phận Tuyển dụng</p>
+                ";
+            }
+
+            $mail->send();
+
+        } catch (Exception $e) {
+            // Chỉ ghi log lỗi, không làm sập web
+            error_log("Lỗi gửi email kết quả ({$status}) tới {$candidate['email']}: {$mail->ErrorInfo}");
+        }
+    }
+    // --- HÀM HỖ TRỢ TUYỂN DỤNG (ĐÃ FIX LỖI DUPLICATE EMAIL) ---
+    private function promoteToEmployee($candidateData, $cvPath)
+    {
+        $employeeModel = new Employee();
+        
+        // 1. Tìm phòng ban mặc định
+        $deptModel = new Department();
+        $allDepts = $deptModel->all(); 
+        $deptId = !empty($allDepts) ? $allDepts[0]['id'] : null;
+
+        if (!$deptId) {
+            $deptModel->create(['name' => 'Phòng Nhân Sự (Auto)', 'description' => 'Tự động tạo']);
+            $newDepts = $deptModel->all();
+            $deptId = $newDepts[0]['id'];
+        }
+
+        // 2. Lấy tên vị trí công việc
+        $position = $this->positionModel->find($candidateData['position_id']);
+        $jobTitle = $position['title'] ?? 'Staff';
+
+        // 3. Chuẩn bị dữ liệu nhân viên mới
+        $empData = [
+            'full_name'     => $candidateData['full_name'],
+            'email'         => $candidateData['email'],
+            'phone'         => $candidateData['phone'],
+            'job_title'     => $jobTitle,
+            'department_id' => $deptId,
+            'start_date'    => date('Y-m-d'),
+            'status'        => 'probation',
+            'photo_path'    => null,
+            'contract_path' => $cvPath
+        ];
+
+        // 4. Tạo nhân viên (Có xử lý lỗi trùng lặp)
+        try {
+            $employeeModel->create($empData);
+            flash('success', 'Tuyệt vời! Đã tuyển dụng và tạo hồ sơ nhân viên thành công.');
+        } catch (\PDOException $e) {
+            // Mã lỗi 23000 là lỗi vi phạm ràng buộc (Duplicate entry)
+            if ($e->getCode() == '23000') {
+                flash('warning', 'Ứng viên đã được chuyển sang trạng thái "Đã tuyển", nhưng hồ sơ nhân viên đã tồn tại từ trước (Email trùng lặp).');
+            } else {
+                // Nếu là lỗi khác thì vẫn báo lỗi như thường
+                throw $e; 
+            }
+        }
+        
+        redirect('/employees');
         exit;
     }
 }

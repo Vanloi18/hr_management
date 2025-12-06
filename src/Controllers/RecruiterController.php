@@ -4,12 +4,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\Recruiter;
-use App\Core\Validator; 
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use App\Core\Validator; // <-- Import Validator
 
 class RecruiterController extends Controller
 {
@@ -204,60 +199,5 @@ class RecruiterController extends Controller
             ]);
             exit();
         }
-    }
-    public function exportExcel()
-    {
-        $this->checkAuthentication();
-        $keyword = $_GET['keyword'] ?? '';
-
-        $data = $this->recruiterModel->getAllForExport($keyword);
-
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('DS Nhà tuyển dụng');
-
-        // Header
-        $headers = ['ID', 'Tên công ty', 'Email', 'SĐT', 'Người liên hệ', 'Địa chỉ', 'Ngày tạo'];
-        $sheet->fromArray([$headers], NULL, 'A1');
-
-        // Data
-        $rows = [];
-        foreach ($data as $item) {
-            $rows[] = [
-                $item['id'],
-                $item['company_name'],
-                $item['email'],
-                $item['phone'],
-                $item['contact_person'],
-                $item['address'],
-                date('d/m/Y', strtotime($item['created_at']))
-            ];
-        }
-
-        if (!empty($rows)) {
-            $sheet->fromArray($rows, NULL, 'A2');
-        }
-
-        // Style
-        $lastRow = count($rows) + 1;
-        $sheet->getStyle("A1:G{$lastRow}")->applyFromArray([
-            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
-        ]);
-        $sheet->getStyle('A1:G1')->applyFromArray([
-            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0d6efd']],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
-        ]);
-        foreach (range('A', 'G') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
-
-        // Output
-        $fileName = 'DS_NhaTuyenDung_' . date('dmY') . '.xlsx';
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $fileName . '"');
-        header('Cache-Control: max-age=0');
-
-        $writer = new Xlsx($spreadsheet);
-        $writer->save('php://output');
-        exit;
     }
 }
