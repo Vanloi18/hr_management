@@ -6,6 +6,13 @@ use App\Core\Controller;
 use App\Models\User;
 use App\Core\Validator;
 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use Mpdf\Mpdf;
+
 class UserController extends Controller
 {
     protected $userModel;
@@ -221,5 +228,139 @@ class UserController extends Controller
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
             exit();
         }
+    }
+
+    /**
+     * Xuất Excel danh sách User
+     */
+    public function exportExcel()
+    {
+        $this->requireAdmin();
+
+        // 1. Lấy tham số filter
+        $keyword = $_GET['keyword'] ?? '';
+        $role    = $_GET['role'] ?? '';
+
+        // 2. Lấy dữ liệu
+        $users = $this->userModel->getAllForExport($keyword, $role);
+
+        // 3. Khởi tạo Excel
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Danh sách Tài khoản');
+
+        // Header
+        $headers = ['ID', 'Họ tên', 'Email', 'Vai trò', 'Trạng thái', 'Ngày tạo'];
+        $sheet->fromArray([$headers], NULL, 'A1');
+
+        // Data
+        $rows = [];
+        foreach ($users as $user) {
+            // Xử lý hiển thị text
+            $roleText = ($user['role'] === 'admin') ? 'Quản trị viên' : 'Nhân sự (HR)';
+            $statusText = ($user['status'] == 1) ? 'Hoạt động' : 'Đã khóa';
+
+            $rows[] = [
+                $user['id'],
+                $user['full_name'],
+                $user['email'],
+                $roleText,
+                $statusText,
+                date('d/m/Y H:i', strtotime($user['created_at']))
+            ];
+        }
+
+        if (!empty($rows)) {
+            $sheet->fromArray($rows, NULL, 'A2');
+        }
+
+        // Style
+        $lastRow = count($rows) + 1;
+        $sheet->getStyle("A1:F{$lastRow}")->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
+        ]);
+        $sheet->getStyle('A1:F1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0d6efd']], // Màu xanh Primary
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+        ]);
+        foreach (range('A', 'F') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
+
+        // Output
+        $fileName = 'DS_TaiKhoan_' . date('dmY_Hi') . '.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $fileName . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
+    /**
+     * Xuất PDF danh sách User
+     */
+    public function exportPDF()
+    {
+        $this->requireAdmin();
+
+        $keyword = $_GET['keyword'] ?? '';
+        $role    = $_GET['role'] ?? '';
+
+        $users = $this->userModel->getAllForExport($keyword, $role);
+
+        // HTML Template
+        $html = '
+        <html>
+        <head>
+            <style>
+                body { font-family: DejaVu Sans, sans-serif; font-size: 11px; }
+                h2 { text-align: center; color: #0d6efd; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                th { background-color: #0d6efd; color: white; padding: 8px; border: 1px solid #333; font-weight: bold; }
+                td { padding: 8px; border: 1px solid #444; text-align: center; }
+                .text-left { text-align: left; }
+            </style>
+        </head>
+        <body>
+            <h2>DANH SÁCH TÀI KHOẢN HỆ THỐNG</h2>
+            <p style="text-align:center">Ngày xuất: ' . date('d/m/Y H:i') . '</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th width="5%">ID</th>
+                        <th width="25%">Họ tên</th>
+                        <th width="25%">Email</th>
+                        <th width="15%">Vai trò</th>
+                        <th width="15%">Trạng thái</th>
+                        <th width="15%">Ngày tạo</th>
+                    </tr>
+                </thead>
+                <tbody>';
+        
+        foreach ($users as $user) {
+            $roleText = ($user['role'] === 'admin') ? 'Quản trị viên' : 'Nhân sự';
+            $statusText = ($user['status'] == 1) ? 'Hoạt động' : 'Đã khóa';
+
+            $html .= '<tr>
+                <td>' . $user['id'] . '</td>
+                <td class="text-left">' . $user['full_name'] . '</td>
+                <td class="text-left">' . $user['email'] . '</td>
+                <td>' . $roleText . '</td>
+                <td>' . $statusText . '</td>
+                <td>' . date('d/m/Y', strtotime($user['created_at'])) . '</td>
+            </tr>';
+        }
+
+        $html .= '</tbody></table></body></html>';
+
+        try {
+            $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4']);
+            $mpdf->WriteHTML($html);
+            $mpdf->Output('DS_TaiKhoan_' . date('dmY') . '.pdf', 'D');
+        } catch (\Exception $e) {
+            echo "Lỗi xuất PDF: " . $e->getMessage();
+        }
+        exit;
     }
 }

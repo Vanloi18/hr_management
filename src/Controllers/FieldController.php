@@ -4,7 +4,13 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\Field;
-use App\Core\Validator; // <-- Import Validator
+use App\Core\Validator; 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use Mpdf\Mpdf;
 
 class FieldController extends Controller
 {
@@ -183,5 +189,115 @@ class FieldController extends Controller
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
             exit();
         }
+    }
+    /**
+     * Xuất Excel
+     */
+    public function exportExcel()
+    {
+        $this->requireAdmin();
+        $keyword = $_GET['keyword'] ?? '';
+        $fields = $this->fieldModel->getAllForExport($keyword);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Danh sách Lĩnh vực');
+
+        // Header
+        $headers = ['ID', 'Tên lĩnh vực', 'Mô tả', 'Số tin tuyển dụng'];
+        $sheet->fromArray([$headers], NULL, 'A1');
+
+        // Data
+        $rows = [];
+        foreach ($fields as $field) {
+            $rows[] = [
+                $field['id'],
+                $field['field_name'],
+                $field['description'],
+                $field['position_count'] // Số lượng tin
+            ];
+        }
+
+        if (!empty($rows)) {
+            $sheet->fromArray($rows, NULL, 'A2');
+        }
+
+        // Style
+        $lastRow = count($rows) + 1;
+        $sheet->getStyle("A1:D{$lastRow}")->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
+        ]);
+        $sheet->getStyle('A1:D1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0d6efd']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+        ]);
+        foreach (range('A', 'D') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
+
+        // Output
+        $fileName = 'DS_LinhVuc_' . date('dmY_Hi') . '.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $fileName . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
+    /**
+     * Xuất PDF
+     */
+    public function exportPDF()
+    {
+        $this->requireAdmin();
+        $keyword = $_GET['keyword'] ?? '';
+        $fields = $this->fieldModel->getAllForExport($keyword);
+
+        $html = '
+        <html>
+        <head>
+            <style>
+                body { font-family: DejaVu Sans, sans-serif; font-size: 11px; }
+                h2 { text-align: center; color: #0d6efd; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                th { background-color: #0d6efd; color: white; padding: 8px; border: 1px solid #333; }
+                td { padding: 8px; border: 1px solid #444; text-align: center; }
+                .text-left { text-align: left; }
+            </style>
+        </head>
+        <body>
+            <h2>DANH MỤC LĨNH VỰC HOẠT ĐỘNG</h2>
+            <p style="text-align:center">Ngày xuất: ' . date('d/m/Y H:i') . '</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th width="10%">ID</th>
+                        <th width="30%">Tên lĩnh vực</th>
+                        <th width="40%">Mô tả</th>
+                        <th width="20%">Số tin tuyển dụng</th>
+                    </tr>
+                </thead>
+                <tbody>';
+        
+        foreach ($fields as $field) {
+            $html .= '<tr>
+                <td>' . $field['id'] . '</td>
+                <td class="text-left">' . $field['field_name'] . '</td>
+                <td class="text-left">' . $field['description'] . '</td>
+                <td>' . $field['position_count'] . '</td>
+            </tr>';
+        }
+
+        $html .= '</tbody></table></body></html>';
+
+        try {
+            $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4']);
+            $mpdf->WriteHTML($html);
+            $mpdf->Output('DS_LinhVuc_' . date('dmY') . '.pdf', 'D');
+        } catch (\Exception $e) {
+            echo "Lỗi xuất PDF: " . $e->getMessage();
+        }
+        exit;
     }
 }

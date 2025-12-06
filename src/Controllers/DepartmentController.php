@@ -6,12 +6,18 @@ use App\Core\Controller;
 use App\Models\Department;
 use App\Core\Validator; 
 use App\Models\Employee;
+// Thư viện Export
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use Mpdf\Mpdf;
 
 class DepartmentController extends Controller
 {
     protected $departmentModel;
     protected $employeeModel;
-
 
     public function __construct()
     {
@@ -24,7 +30,6 @@ class DepartmentController extends Controller
     {
         $this->checkAuthentication();
 
-        // 1. Lấy tham số
         $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
         $page    = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         if ($page < 1) $page = 1;
@@ -32,12 +37,10 @@ class DepartmentController extends Controller
         $limit  = 10;
         $offset = ($page - 1) * $limit;
 
-        // 2. Lấy dữ liệu
         $departments = $this->departmentModel->getPaginated($keyword, $limit, $offset);
         $totalRecords = $this->departmentModel->countAll($keyword);
         $totalPages = ceil($totalRecords / $limit);
 
-        // 3. Đóng gói dữ liệu
         $data = [
             'title'        => 'Quản lý Phòng ban',
             'departments'  => $departments,
@@ -47,70 +50,35 @@ class DepartmentController extends Controller
             'keyword'      => $keyword
         ];
 
-        // 4. Xử lý AJAX
         if (isAjaxRequest()) {
             return partial('departments/index', $data);
         }
-
         return view('departments/index', $data);
     }
 
     public function create()
     {
         $this->checkAuthentication();
-        
-        $data = [
-            'title' => 'Thêm Phòng ban mới'
-        ];
-        
-        if (isAjaxRequest()) {
-            return partial('departments/create', $data);
-        }
-        return view('departments/create', $data);
+        return view('departments/create', ['title' => 'Thêm Phòng ban']);
     }
 
-    /**
-     * Xử lý lưu mới (POST /departments) - PHIÊN BẢN AJAX + VALIDATOR
-     */
     public function store()
     {
         $this->checkAuthentication();
-        
-        $validator = new Validator();
-        $rules = [
-            'name' => 'required|unique:departments' // Tự kiểm tra trùng
-        ];
+        $name = trim($_POST['name'] ?? '');
 
-        // 1. Chạy Validate
-        if (!$validator->validate($_POST, $rules)) {
-            // 2. Validate THẤT BẠI
-            if (isAjaxRequest()) {
-                http_response_code(422); // Lỗi Validation
-                header('Content-Type: application/json');
-                echo json_encode([
-                    'success' => false,
-                    'errors' => $validator->errors() // Gửi mảng lỗi về
-                ]);
-                exit();
-            }
-            return; // Validator đã tự redirect
+        if (empty($name)) {
+            flash('error', 'Tên phòng ban không được để trống.');
+            redirect('/departments/create');
         }
 
-        // 3. Validate THÀNH CÔNG
-        $name = e($_POST['name']);
-        $this->departmentModel->create($name); // Gọi Model
-
-        if (isAjaxRequest()) {
-            header('Content-Type: application/json');
-            echo json_encode([
-                'success' => true,
-                'message' => 'Thêm phòng ban thành công!',
-                'redirect_url' => BASE_URL . '/departments' 
-            ]);
-            exit();
+        if ($this->departmentModel->findByName($name)) {
+            flash('error', 'Tên phòng ban đã tồn tại.');
+            redirect('/departments/create');
         }
-        
-        flash('success', 'Thêm phòng ban thành công!');
+
+        $this->departmentModel->create($name);
+        flash('success', 'Thêm phòng ban thành công.');
         redirect('/departments');
     }
 
@@ -118,123 +86,61 @@ class DepartmentController extends Controller
     {
         $this->checkAuthentication();
         $id = $_GET['id'] ?? null;
-        if (!$id) redirect('/departments'); 
+        if (!$id) redirect('/departments');
 
         $department = $this->departmentModel->find($id);
-        if (!$department) {
-            flash('error', 'Không tìm thấy phòng ban.');
-            redirect('/departments');
-        }
+        if (!$department) redirect('/departments');
 
-        $data = [
+        return view('departments/edit', [
             'title' => 'Chỉnh sửa Phòng ban',
             'department' => $department
-        ];
-        
-        if (isAjaxRequest()) {
-            return partial('departments/edit', $data);
-        }
-        return view('departments/edit', $data);
+        ]);
     }
 
-    /**
-     * Xử lý cập nhật (POST /departments/update) - Đã tái cấu trúc
-     */
     public function update()
     {
         $this->checkAuthentication();
-        
         $id = $_POST['id'] ?? null;
-        $validator = new Validator();
-        $rules = [
-            // Kiểm tra trùng, ngoại trừ ID của chính nó
-            'name' => 'required|unique:departments,' . $id 
-        ];
+        $name = trim($_POST['name'] ?? '');
 
-        if (!$validator->validate($_POST, $rules)) {
-            return; // Validator tự flash lỗi và redirect về form edit
+        if (!$id || empty($name)) {
+            flash('error', 'Dữ liệu không hợp lệ.');
+            redirect('/departments');
         }
-        
-        $name = e($_POST['name']);
-        $this->departmentModel->update($id, $name); // Gọi Model
 
-        flash('success', 'Cập nhật phòng ban thành công!');
+        $exists = $this->departmentModel->findByNameAndNotId($name, $id);
+        if ($exists) {
+            flash('error', 'Tên phòng ban đã tồn tại.');
+            redirect("/departments/edit?id=$id");
+        }
+
+        $this->departmentModel->update($id, $name);
+        flash('success', 'Cập nhật thành công.');
         redirect('/departments');
     }
 
-    /**
-     * Xử lý "Chỉnh sửa trực tiếp" (Inline Edit) - PHIÊN BẢN AJAX + VALIDATOR
-     * (Hàm mới được thêm vào)
-     */
-    public function inlineUpdate()
-    {
-        $this->checkAuthentication();
-        
-        $id = $_POST['id'] ?? null;
-        $name = e(trim($_POST['name'] ?? ''));
-
-        $validator = new Validator();
-        $rules = [
-            'name' => 'required|unique:departments,' . $id
-        ];
-
-        // Dữ liệu truyền vào Validator phải là mảng
-        if (!$validator->validate(['name' => $name], $rules)) { 
-            // Validate THẤT BẠI
-            http_response_code(422); 
-            header('Content-Type: application/json');
-            echo json_encode([
-                'success' => false,
-                'errors' => $validator->errors() 
-            ]);
-            exit();
-        }
-
-        // Validate THÀNH CÔNG
-        $this->departmentModel->update($id, $name); // Gọi Model
-
-        header('Content-Type: application/json');
-        echo json_encode([
-            'success' => true,
-            'newName' => $name
-        ]);
-        exit();
-    }
-
-    /**
-     * Hàm destroy() (phiên bản AJAX) giữ nguyên từ file gốc
-     */
     public function destroy()
     {
-        $this->checkAuthentication();
-        
-        // Báo cho trình duyệt biết đây là JSON
+        $this->requireAdmin();
         header('Content-Type: application/json');
 
         try {
             $id = $_POST['id'] ?? null;
-            if (!$id) {
-                // Ném lỗi nếu thiếu ID
-                throw new \Exception('Thiếu ID của phòng ban.');
-            }
+            if (!$id) throw new \Exception('Thiếu ID.');
 
-            // Gọi Model để xóa
             $this->departmentModel->delete($id); 
 
-            // Trả về JSON thành công
-            echo json_encode([
-                'success' => true,
-                'message' => 'Đã xóa phòng ban thành công.'
-            ]);
+            echo json_encode(['success' => true, 'message' => 'Đã xóa phòng ban.']);
             exit();
 
         } catch (\Exception $e) {
-            // Nếu có lỗi, trả về JSON lỗi
-            http_response_code(500); // 500 Internal Server Error
-            echo json_encode([
-                'success' => false,
-                'message' => $e->getMessage()
-            ]);
+            // Xử lý lỗi khóa ngoại (nếu có nhân viên trong phòng)
+            if ($e->getCode() === '23000') {
+                echo json_encode(['success' => false, 'message' => 'Không thể xóa: Vẫn còn nhân viên trong phòng ban này.']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            }
             exit();
         }
     }
@@ -246,9 +152,8 @@ class DepartmentController extends Controller
         
         $departmentId = $_GET['id'] ?? null;
 
-        if (!$departmentId || !is_numeric($departmentId)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Thiếu ID Phòng ban hợp lệ.']);
+        if (!$departmentId) {
+            echo json_encode(['error' => 'Thiếu ID.']);
             exit;
         }
 
@@ -262,8 +167,111 @@ class DepartmentController extends Controller
                 'employees' => $employees
             ]);
         } catch (\Exception $e) {
-            http_response_code(500);
-            echo json_encode(['error' => 'Lỗi server.']);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Xuất Excel
+     */
+    public function exportExcel()
+    {
+        $this->checkAuthentication();
+        $keyword = $_GET['keyword'] ?? '';
+        $departments = $this->departmentModel->getAllForExport($keyword);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Danh sách Phòng ban');
+
+        $headers = ['ID', 'Tên phòng ban', 'Số lượng nhân sự', 'Ngày tạo'];
+        $sheet->fromArray([$headers], NULL, 'A1');
+
+        $rows = [];
+        foreach ($departments as $dept) {
+            $rows[] = [
+                $dept['id'],
+                $dept['name'],
+                $dept['employee_count'],
+                date('d/m/Y', strtotime($dept['created_at']))
+            ];
+        }
+
+        if (!empty($rows)) $sheet->fromArray($rows, NULL, 'A2');
+
+        $lastRow = count($rows) + 1;
+        $sheet->getStyle("A1:D{$lastRow}")->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
+        ]);
+        $sheet->getStyle('A1:D1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0d6efd']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+        ]);
+        foreach (range('A', 'D') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
+
+        $fileName = 'DS_PhongBan_' . date('dmY') . '.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $fileName . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
+    /**
+     * Xuất PDF
+     */
+    public function exportPDF()
+    {
+        $this->checkAuthentication();
+        $keyword = $_GET['keyword'] ?? '';
+        $departments = $this->departmentModel->getAllForExport($keyword);
+
+        $html = '
+        <html>
+        <head>
+            <style>
+                body { font-family: DejaVu Sans, sans-serif; font-size: 11px; }
+                h2 { text-align: center; color: #0d6efd; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                th { background-color: #0d6efd; color: white; padding: 8px; border: 1px solid #333; }
+                td { padding: 8px; border: 1px solid #444; text-align: center; }
+                .text-left { text-align: left; }
+            </style>
+        </head>
+        <body>
+            <h2>DANH SÁCH PHÒNG BAN</h2>
+            <p style="text-align:center">Ngày xuất: ' . date('d/m/Y H:i') . '</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th width="10%">ID</th>
+                        <th width="50%">Tên phòng ban</th>
+                        <th width="20%">Nhân sự</th>
+                        <th width="20%">Ngày tạo</th>
+                    </tr>
+                </thead>
+                <tbody>';
+        
+        foreach ($departments as $dept) {
+            $html .= '<tr>
+                <td>' . $dept['id'] . '</td>
+                <td class="text-left">' . $dept['name'] . '</td>
+                <td>' . $dept['employee_count'] . '</td>
+                <td>' . date('d/m/Y', strtotime($dept['created_at'])) . '</td>
+            </tr>';
+        }
+
+        $html .= '</tbody></table></body></html>';
+
+        try {
+            $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4']);
+            $mpdf->WriteHTML($html);
+            $mpdf->Output('DS_PhongBan_' . date('dmY') . '.pdf', 'D');
+        } catch (\Exception $e) {
+            echo "Lỗi xuất PDF: " . $e->getMessage();
         }
         exit;
     }

@@ -7,8 +7,8 @@ unset($_SESSION['_flash']['errors'], $_SESSION['_flash']['old']);
 <div class="container-fluid py-4 bg-light">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden edit-user-card">
-
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden user-card">
+                
                 <div class="card-header border-0 py-4 bg-success text-white" style="background: linear-gradient(135deg, #198754 0%, #20c997 100%);">
                     <div class="d-flex align-items-center">
                         <div class="icon-box bg-white bg-opacity-25 rounded-circle p-3 me-3 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
@@ -22,7 +22,6 @@ unset($_SESSION['_flash']['errors'], $_SESSION['_flash']['old']);
                 </div>
 
                 <div class="card-body p-4 p-md-5">
-
                     <?php if (!empty($errors)): ?>
                         <div class="alert alert-danger border-0 rounded-3 shadow-sm mb-4">
                             <div class="d-flex align-items-start">
@@ -40,26 +39,23 @@ unset($_SESSION['_flash']['errors'], $_SESSION['_flash']['old']);
                     <?php endif; ?>
 
                     <form method="POST" action="<?php echo BASE_URL; ?>/users" class="needs-validation" novalidate>
-                        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
 
                         <div class="mb-4">
                             <h6 class="fw-bold text-uppercase text-secondary text-xs opacity-75 mb-3 ls-1">
                                 <i class="bi bi-info-circle me-1"></i> Thông tin tài khoản
                             </h6>
-                            
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label class="form-label fw-medium">Họ và tên <span class="text-danger">*</span></label>
                                     <input type="text" name="full_name" class="form-control form-control-lg bg-light border-0" 
                                            value="<?php echo e($old['full_name'] ?? ''); ?>" placeholder="VD: Nguyễn Văn A" required>
                                 </div>
-                                
                                 <div class="col-md-6">
                                     <label class="form-label fw-medium">Email <span class="text-danger">*</span></label>
                                     <input type="email" name="email" class="form-control form-control-lg bg-light border-0" 
                                            value="<?php echo e($old['email'] ?? ''); ?>" placeholder="email@company.com" required>
                                 </div>
-                                
                                 <div class="col-md-6">
                                     <label class="form-label fw-medium">Vai trò <span class="text-danger">*</span></label>
                                     <select name="role" class="form-select form-select-lg bg-light border-0 cursor-pointer">
@@ -76,7 +72,6 @@ unset($_SESSION['_flash']['errors'], $_SESSION['_flash']['old']);
                             <h6 class="fw-bold text-uppercase text-secondary text-xs opacity-75 mb-3 ls-1">
                                 <i class="bi bi-key me-1"></i> Thiết lập mật khẩu
                             </h6>
-
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-medium">Mật khẩu <span class="text-danger">*</span></label>
@@ -116,8 +111,26 @@ unset($_SESSION['_flash']['errors'], $_SESSION['_flash']['old']);
 </div>
 
 <style>
-    /* ... (Copy Style từ file Edit ở trên) ... */
+    .ls-1 { letter-spacing: 1px; }
+    .form-control:focus, .form-select:focus { background-color: #fff; box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.15); border: 1px solid #20c997 !important; }
+    
+    /* Dark Mode */
+    [data-theme="dark"] .user-card { background-color: #1e1e1e !important; border: 1px solid #333 !important; }
+    [data-theme="dark"] .form-control, [data-theme="dark"] .form-select, [data-theme="dark"] .input-group .btn-light { background-color: #2b2b2b !important; color: #fff !important; border-color: #444 !important; }
+    [data-theme="dark"] .form-control:focus { background-color: #333 !important; border-color: #198754 !important; }
+    [data-theme="dark"] .text-secondary { color: #a0a0a0 !important; }
 </style>
+
 <script>
-    /* ... (Copy Script từ file Edit ở trên) ... */
+    function togglePassword(id) {
+        const input = document.getElementById(id);
+        const icon = document.getElementById(id + '-icon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    }
 </script>

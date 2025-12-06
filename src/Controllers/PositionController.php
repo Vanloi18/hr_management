@@ -8,6 +8,13 @@ use App\Models\Recruiter;
 use App\Models\Field;
 use App\Core\Validator;
 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use Mpdf\Mpdf;
+
 class PositionController extends Controller
 {
     protected $positionModel;
@@ -22,7 +29,6 @@ class PositionController extends Controller
     {
         $this->checkAuthentication();
 
-        // 1. Lấy tham số filter
         $keyword      = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
         $status       = isset($_GET['status']) ? trim($_GET['status']) : '';
         $recruiter_id = isset($_GET['recruiter_id']) ? trim($_GET['recruiter_id']) : '';
@@ -32,33 +38,148 @@ class PositionController extends Controller
         $limit  = 10;
         $offset = ($page - 1) * $limit;
 
-        // 2. Lấy dữ liệu
         $positions = $this->positionModel->getPaginated($keyword, $status, $recruiter_id, $limit, $offset);
         $totalRecords = $this->positionModel->countAll($keyword, $status, $recruiter_id);
         $totalPages = ceil($totalRecords / $limit);
-        
-        // Lấy danh sách công ty để hiển thị dropdown lọc
-        $recruitersList = $this->positionModel->getRecruitersList();
 
-        // 3. Đóng gói dữ liệu
+        // Lấy danh sách cho filter
+        $recruitersList = (new Recruiter())->allForDropdown(); 
+
         $data = [
-            'title'          => 'Quản lý Tin tuyển dụng',
-            'positions'      => $positions,
-            'recruitersList' => $recruitersList, // Truyền list công ty sang view
-            'currentPage'    => $page,
-            'totalPages'     => $totalPages,
-            'totalRecords'   => $totalRecords,
-            'keyword'        => $keyword,
-            'status'         => $status,
-            'recruiter_id'   => $recruiter_id
+            'title'        => 'Quản lý Tin tuyển dụng',
+            'positions'    => $positions,
+            'recruitersList' => $recruitersList,
+            'currentPage'  => $page,
+            'totalPages'   => $totalPages,
+            'totalRecords' => $totalRecords,
+            'keyword'      => $keyword,
+            'status'       => $status,
+            'recruiter_id' => $recruiter_id
         ];
 
-        // 4. Xử lý AJAX (Chống lỗi lồng layout)
         if (isAjaxRequest()) {
             return partial('positions/index', $data);
         }
-
         return view('positions/index', $data);
+    }
+
+    public function exportExcel()
+    {
+        $this->checkAuthentication();
+        $keyword      = $_GET['keyword'] ?? '';
+        $status       = $_GET['status'] ?? '';
+        $recruiter_id = $_GET['recruiter_id'] ?? '';
+
+        $positions = $this->positionModel->getAllForExport($keyword, $status, $recruiter_id);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Tin tuyển dụng');
+
+        $headers = ['ID', 'Tiêu đề', 'Công ty', 'Lĩnh vực', 'Mức lương', 'Trạng thái', 'Ngày tạo'];
+        $sheet->fromArray([$headers], NULL, 'A1');
+
+        $rows = [];
+        foreach ($positions as $pos) {
+            $statusText = ($pos['status'] == 'open') ? 'Đang tuyển' : 'Đã đóng';
+            $rows[] = [
+                $pos['id'],
+                $pos['title'],
+                $pos['company_name'],
+                $pos['field_name'],
+                $pos['salary_range'],
+                $statusText,
+                date('d/m/Y', strtotime($pos['created_at']))
+            ];
+        }
+
+        if (!empty($rows)) $sheet->fromArray($rows, NULL, 'A2');
+
+        $lastRow = count($rows) + 1;
+        $sheet->getStyle("A1:G{$lastRow}")->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
+        ]);
+        $sheet->getStyle('A1:G1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0d6efd']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+        ]);
+        foreach (range('A', 'G') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
+
+        $fileName = 'DS_TinTuyenDung_' . date('dmY') . '.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $fileName . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
+    /**
+     * Xuất PDF
+     */
+    public function exportPDF()
+    {
+        $this->checkAuthentication();
+        $keyword      = $_GET['keyword'] ?? '';
+        $status       = $_GET['status'] ?? '';
+        $recruiter_id = $_GET['recruiter_id'] ?? '';
+
+        $positions = $this->positionModel->getAllForExport($keyword, $status, $recruiter_id);
+
+        $html = '
+        <html>
+        <head>
+            <style>
+                body { font-family: DejaVu Sans, sans-serif; font-size: 10px; }
+                h2 { text-align: center; color: #0d6efd; margin-bottom: 15px; }
+                table { width: 100%; border-collapse: collapse; }
+                th { background-color: #0d6efd; color: white; padding: 6px; border: 1px solid #333; }
+                td { padding: 6px; border: 1px solid #444; text-align: center; }
+                .text-left { text-align: left; }
+            </style>
+        </head>
+        <body>
+            <h2>DANH SÁCH VỊ TRÍ TUYỂN DỤNG</h2>
+            <p style="text-align:center">Ngày xuất: ' . date('d/m/Y H:i') . '</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th width="5%">ID</th>
+                        <th width="25%">Tiêu đề</th>
+                        <th width="20%">Công ty</th>
+                        <th width="15%">Lĩnh vực</th>
+                        <th width="15%">Mức lương</th>
+                        <th width="10%">Trạng thái</th>
+                        <th width="10%">Ngày tạo</th>
+                    </tr>
+                </thead>
+                <tbody>';
+        
+        foreach ($positions as $pos) {
+            $statusText = ($pos['status'] == 'open') ? 'Đang tuyển' : 'Đã đóng';
+            $html .= '<tr>
+                <td>' . $pos['id'] . '</td>
+                <td class="text-left">' . $pos['title'] . '</td>
+                <td class="text-left">' . $pos['company_name'] . '</td>
+                <td>' . $pos['field_name'] . '</td>
+                <td>' . $pos['salary_range'] . '</td>
+                <td>' . $statusText . '</td>
+                <td>' . date('d/m/Y', strtotime($pos['created_at'])) . '</td>
+            </tr>';
+        }
+
+        $html .= '</tbody></table></body></html>';
+
+        try {
+            $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4-L']); // Khổ ngang
+            $mpdf->WriteHTML($html);
+            $mpdf->Output('DS_TinTuyenDung_' . date('dmY') . '.pdf', 'D');
+        } catch (\Exception $e) {
+            echo "Lỗi xuất PDF: " . $e->getMessage();
+        }
+        exit;
     }
 
     public function create()

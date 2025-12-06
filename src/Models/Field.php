@@ -98,4 +98,28 @@ class Field extends Model
         $result = $this->db->query($sql, $params)->fetch();
         return $result ? (int)$result['total'] : 0;
     }
+    /**
+     * Lấy toàn bộ dữ liệu để xuất file (Kèm số lượng tin tuyển dụng)
+     */
+    public function getAllForExport($keyword = '')
+    {
+        // Subquery đếm số tin tuyển dụng (giả sử bảng positions có field_id)
+        $sql = "SELECT f.*, 
+                       (SELECT COUNT(*) FROM positions p WHERE p.field_id = f.id) as position_count
+                FROM fields f 
+                WHERE 1=1";
+        
+        $params = [];
+
+        if (!empty($keyword)) {
+            $sql .= " AND (f.field_name LIKE ? OR f.description LIKE ?)";
+            $keywordParam = "%$keyword%";
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+        }
+
+        $sql .= " ORDER BY f.id DESC"; // Không LIMIT
+
+        return $this->db->query($sql, $params)->fetchAll();
+    }
 }

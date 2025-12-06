@@ -27,7 +27,7 @@
                 <div class="col-md-6 col-lg-7 text-md-end">
                     <div class="d-flex gap-2 justify-content-md-end">
                         <div class="dropdown">
-                            <button class="btn btn-light border-0 rounded-pill px-4 py-2 dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown">
+                            <button class="btn btn-light border-0 rounded-pill px-3 py-2 dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown">
                                 <i class="bi bi-funnel me-1"></i> 
                                 <?php 
                                     if(isset($role) && $role === 'admin') echo 'Quản trị viên';
@@ -39,6 +39,30 @@
                                 <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/users">Tất cả</a></li>
                                 <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/users?role=admin<?php echo isset($keyword) ? '&keyword='.e($keyword) : '' ?>">Quản trị viên</a></li>
                                 <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/users?role=hr<?php echo isset($keyword) ? '&keyword='.e($keyword) : '' ?>">Nhân sự</a></li>
+                            </ul>
+                        </div>
+
+                        <div class="dropdown">
+                            <button class="btn btn-success rounded-pill px-3 py-2 shadow-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-download me-1"></i> Xuất file
+                            </button>
+                            <ul class="dropdown-menu shadow border-0 rounded-3 mt-2">
+                                <?php 
+                                    $query = http_build_query([
+                                        'keyword' => $keyword ?? '',
+                                        'role'    => $role ?? ''
+                                    ]);
+                                ?>
+                                <li>
+                                    <a class="dropdown-item" href="<?php echo BASE_URL; ?>/users/export-excel?<?php echo $query; ?>">
+                                        <i class="bi bi-file-earmark-excel text-success me-2"></i> Xuất Excel
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="<?php echo BASE_URL; ?>/users/export-pdf?<?php echo $query; ?>">
+                                        <i class="bi bi-file-earmark-pdf text-danger me-2"></i> Xuất PDF
+                                    </a>
+                                </li>
                             </ul>
                         </div>
 
@@ -108,17 +132,18 @@
 
                                     <td>
                                         <?php if (isset($user['status']) && $user['status'] == 0): ?>
-                                            <span class="badge bg-secondary-subtle text-secondary px-2 py-1 rounded-2 fw-medium">
+                                            <span class="badge bg-secondary-subtle text-secondary px-2 py-1 rounded-2 fw-medium border border-secondary border-opacity-10">
                                                 <i class="bi bi-lock-fill me-1"></i>Đã khóa
                                             </span>
                                         <?php else: ?>
-                                            <span class="badge bg-success-subtle text-success px-2 py-1 rounded-2 fw-medium">
+                                            <span class="badge bg-success-subtle text-success px-2 py-1 rounded-2 fw-medium border border-success border-opacity-10">
                                                 <i class="bi bi-check-circle-fill me-1"></i>Hoạt động
                                             </span>
                                         <?php endif; ?>
                                     </td>
                                     
                                     <td class="text-secondary small">
+                                        <i class="bi bi-calendar3 me-1"></i>
                                         <?php echo e(date('d/m/Y', strtotime($user['created_at']))); ?>
                                     </td>
                                     
@@ -156,71 +181,21 @@
                 </table>
             </div>
             
-            <?php if (isset($totalPages) && $totalPages > 1): ?>
-            <div class="card-footer bg-white border-top py-4 px-4">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-                    <div class="text-secondary small">
-                        Hiển thị <strong><?php echo count($users); ?></strong> trên tổng số <strong><?php echo $totalRecords ?? 0; ?></strong> tài khoản
-                    </div>
-                    
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination pagination-sm mb-0 gap-1">
-                             <?php
-                                $queryParams = $_GET;
-                                unset($queryParams['page']);
-                                $queryString = http_build_query($queryParams);
-                                $baseUrl = BASE_URL . '/users?' . ($queryString ? $queryString . '&' : '');
-                            ?>
-                            
-                            <li class="page-item <?php echo ($currentPage <= 1) ? 'disabled' : ''; ?>">
-                                <a class="page-link rounded-2 border-0 bg-light text-secondary" href="<?php echo $baseUrl . 'page=' . ($currentPage - 1); ?>">
-                                    <i class="bi bi-chevron-left"></i>
-                                </a>
-                            </li>
-
-                            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                                <li class="page-item <?php echo ($i == $currentPage) ? 'active' : ''; ?>">
-                                    <a class="page-link rounded-2 border-0 <?php echo ($i == $currentPage) ? 'bg-primary text-white shadow-sm' : 'bg-light text-secondary'; ?>" 
-                                       href="<?php echo $baseUrl . 'page=' . $i; ?>">
-                                        <?php echo $i; ?>
-                                    </a>
-                                </li>
-                            <?php endfor; ?>
-
-                            <li class="page-item <?php echo ($currentPage >= $totalPages) ? 'disabled' : ''; ?>">
-                                <a class="page-link rounded-2 border-0 bg-light text-secondary" href="<?php echo $baseUrl . 'page=' . ($currentPage + 1); ?>">
-                                    <i class="bi bi-chevron-right"></i>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
+            <div class="px-4 py-3 border-top bg-white rounded-bottom-4">
+                <?php require BASE_PATH . 'views/partials/pagination.view.php'; ?>
             </div>
-            <?php endif; ?>
         </div>
     </div>
 </div>
 
 <style>
     /* Custom Table Styling */
-    .custom-table td {
-        vertical-align: middle;
-        padding: 1rem 1.5rem;
-    }
-    .table-hover tbody tr:hover {
-        background-color: #f8f9fa;
-    }
+    .custom-table td { vertical-align: middle; padding: 1rem 1.5rem; }
+    .table-hover tbody tr:hover { background-color: #f8f9fa; }
     
     /* Button Icons */
-    .btn-icon {
-        width: 36px; height: 36px;
-        display: flex; align-items: center; justify-content: center;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .btn-icon:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
+    .btn-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+    .btn-icon:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
     
     /* Avatar */
     .object-fit-cover { object-fit: cover; }
@@ -230,102 +205,80 @@
     .bg-info-subtle { background-color: #eff6ff !important; }
     .bg-success-subtle { background-color: #f0fdf4 !important; }
     .bg-secondary-subtle { background-color: #f3f4f6 !important; }
-    
-    /* Pagination Active State */
-    .page-link.bg-primary {
-        background-color: #0d6efd !important;
-        color: white !important;
-    }
 
     /* Dark Mode Overrides */
-    [data-theme="dark"] .bg-danger-subtle { background-color: rgba(220, 53, 69, 0.2) !important; color: #ff6b6b !important; border-color: rgba(220, 53, 69, 0.3) !important; }
-    [data-theme="dark"] .bg-info-subtle { background-color: rgba(13, 202, 240, 0.2) !important; color: #6edff6 !important; border-color: rgba(13, 202, 240, 0.3) !important; }
-    [data-theme="dark"] .bg-success-subtle { background-color: rgba(25, 135, 84, 0.2) !important; color: #75b798 !important; border-color: rgba(25, 135, 84, 0.3) !important; }
-    [data-theme="dark"] .bg-secondary-subtle { background-color: rgba(108, 117, 125, 0.2) !important; color: #a7acb1 !important; }
+    [data-theme="dark"] .bg-light { background-color: #1e1e1e !important; color: #e0e0e0; }
+    [data-theme="dark"] .text-dark { color: #fff !important; }
+    [data-theme="dark"] .text-secondary, [data-theme="dark"] .text-muted { color: #a0a0a5 !important; }
+    [data-theme="dark"] .table { color: #e0e0e0; border-color: #333; }
+    [data-theme="dark"] .table-hover tbody tr:hover { background-color: rgba(255,255,255,0.05); }
+    [data-theme="dark"] .form-control { background-color: #2b2b2b; border-color: #444; color: #fff; }
+    [data-theme="dark"] .btn-light { background-color: rgba(255,255,255,0.1); color: #fff; border: none; }
+    [data-theme="dark"] .bg-white { background-color: #1e1e1e !important; }
+    
+    [data-theme="dark"] .bg-danger-subtle { background-color: rgba(220, 53, 69, 0.2) !important; color: #ff6b6b; border-color: #dc3545; }
+    [data-theme="dark"] .bg-info-subtle { background-color: rgba(13, 202, 240, 0.2) !important; color: #6edff6; border-color: #0dcaf0; }
+    [data-theme="dark"] .bg-success-subtle { background-color: rgba(25, 135, 84, 0.2) !important; color: #75b798; border-color: #198754; }
+    [data-theme="dark"] .bg-secondary-subtle { background-color: rgba(108, 117, 125, 0.2) !important; color: #a7acb1; border-color: #6c757d; }
+    [data-theme="dark"] .pagination .page-link { background-color: #2b2b2b; border-color: #444; color: #fff; }
+    [data-theme="dark"] .pagination .page-item.active .page-link { background-color: #0d6efd; border-color: #0d6efd; }
 </style>
 
 <script>
+    // 1. Kích hoạt Tooltip
     document.addEventListener('DOMContentLoaded', function() {
-        
-        // 1. Khởi tạo Tooltip (Bootstrap 5)
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
+    });
 
-        // 2. Cấu hình biến môi trường
-        const BASE_URL = '<?php echo BASE_URL; ?>';
-        const CSRF_TOKEN = '<?php echo $_SESSION['csrf_token'] ?? ''; ?>';
+    // 2. Xử lý Xóa User (Sử dụng Event Delegation - Cách chuẩn nhất)
+    document.addEventListener('click', function(e) {
+        // Tìm nút xóa (hoặc icon bên trong nó)
+        const button = e.target.closest('.btn-delete-user');
+        
+        // Nếu không phải nút xóa thì bỏ qua
+        if (!button) return;
 
-        // 3. Xử lý Xóa User (Dùng Event Delegation - Cách chuẩn nhất)
-        document.body.addEventListener('click', function(e) {
-            
-            // Tìm nút xóa (hoặc icon bên trong nó)
-            const button = e.target.closest('.btn-delete-user');
-            
-            // Nếu không phải nút xóa thì bỏ qua
-            if (!button) return;
+        // Ngăn hành vi mặc định
+        e.preventDefault();
 
-            // Ngăn hành vi mặc định
-            e.preventDefault();
+        // Hỏi xác nhận
+        if(!confirm('CẢNH BÁO: Hành động này không thể hoàn tác.\nBạn có chắc chắn muốn xóa tài khoản này không?')) {
+            return;
+        }
 
-            const id = button.dataset.id;
-            const row = document.getElementById('row-user-' + id);
+        const id = button.dataset.id;
+        const row = document.getElementById('row-user-' + id);
+        // Lấy Token từ PHP Session
+        const csrfToken = '<?php echo $_SESSION['csrf_token'] ?? ''; ?>';
 
-            // Debug: Xem token có đúng không
-            console.log("Chuẩn bị xóa ID:", id);
-            console.log("CSRF Token:", CSRF_TOKEN);
+        // Hiệu ứng mờ dòng đang xóa
+        if(row) row.style.opacity = '0.5';
 
-            if (!CSRF_TOKEN) {
-                alert("Lỗi: Không tìm thấy Token bảo mật. Hãy thử đăng xuất và đăng nhập lại.");
-                return;
-            }
-
-            if(!confirm('CẢNH BÁO: Hành động này không thể hoàn tác.\nBạn có chắc chắn muốn xóa tài khoản này không?')) {
-                return;
-            }
-
-            // Hiệu ứng mờ dòng đang xóa
-            if(row) row.style.opacity = '0.5';
-
-            // Gửi Ajax
-            fetch(BASE_URL + '/users/delete', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'id=' + encodeURIComponent(id) + '&csrf_token=' + encodeURIComponent(CSRF_TOKEN)
-            })
-            .then(response => {
-                // Kiểm tra HTTP Status
-                if (!response.ok) {
-                    throw new Error('Lỗi Server: ' + response.status);
-                }
-                // Thử parse JSON
-                return response.text().then(text => {
-                    try {
-                        return JSON.parse(text);
-                    } catch (err) {
-                        console.error("Phản hồi không phải JSON:", text);
-                        throw new Error("Server trả về dữ liệu lỗi (không phải JSON).");
-                    }
-                });
-            })
-            .then(data => {
-                if (data.success) {
-                    if(row) row.remove();
-                    // Hiển thị thông báo (Dùng Toast hoặc Alert)
-                    alert('Thành công: ' + data.message);
-                } else {
-                    if(row) row.style.opacity = '1';
-                    alert('Thất bại: ' + data.message);
-                }
-            })
-            .catch(error => {
+        // Gửi Ajax
+        fetch('<?php echo BASE_URL; ?>/users/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'id=' + encodeURIComponent(id) + '&csrf_token=' + encodeURIComponent(csrfToken)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if(row) row.remove();
+                alert('Thành công: ' + data.message);
+            } else {
                 if(row) row.style.opacity = '1';
-                console.error('Lỗi chi tiết:', error);
-                alert('Có lỗi xảy ra: ' + error.message);
-            });
+                alert('Lỗi: ' + data.message);
+            }
+        })
+        .catch(error => {
+            if(row) row.style.opacity = '1';
+            console.error('Lỗi chi tiết:', error);
+            alert('Lỗi kết nối server. Vui lòng thử lại.');
         });
     });
 </script>

@@ -164,4 +164,42 @@ class Position extends Model
     public function getRecruitersList() {
         return $this->db->query("SELECT id, company_name FROM recruiters ORDER BY company_name ASC")->fetchAll();
     }
+    /**
+     * Lấy toàn bộ dữ liệu để xuất file (JOIN với Recruiters và Fields)
+     */
+    public function getAllForExport($keyword = '', $status = '', $recruiter_id = '')
+    {
+        $sql = "SELECT p.*, 
+                       r.company_name, 
+                       f.field_name,
+                       u.full_name as created_by_name
+                FROM positions p
+                LEFT JOIN recruiters r ON p.recruiter_id = r.id
+                LEFT JOIN fields f ON p.field_id = f.id
+                LEFT JOIN users u ON p.created_by_user_id = u.id
+                WHERE 1=1";
+        
+        $params = [];
+
+        if (!empty($keyword)) {
+            $sql .= " AND (p.title LIKE ? OR r.company_name LIKE ?)";
+            $keywordParam = "%$keyword%";
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+        }
+
+        if (!empty($status)) {
+            $sql .= " AND p.status = ?";
+            $params[] = $status;
+        }
+
+        if (!empty($recruiter_id)) {
+            $sql .= " AND p.recruiter_id = ?";
+            $params[] = $recruiter_id;
+        }
+
+        $sql .= " ORDER BY p.id DESC";
+
+        return $this->db->query($sql, $params)->fetchAll();
+    }
 }

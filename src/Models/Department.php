@@ -31,7 +31,7 @@ class Department extends Model
 
     public function create($name)
     {
-        return $this->db->query("INSERT INTO departments (name) VALUES (:name)", ['name' => $name]);
+        return $this->db->query("INSERT INTO departments (name, created_at) VALUES (:name, NOW())", ['name' => $name]);
     }
 
     public function update($id, $name)
@@ -44,13 +44,8 @@ class Department extends Model
         return $this->db->query("DELETE FROM departments WHERE id = :id", ['id' => $id]);
     }
 
-    /**
-     * Lấy danh sách phòng ban: Phân trang + Tìm kiếm + Đếm số nhân viên
-     */
     public function getPaginated($keyword = '', $limit = 10, $offset = 0)
     {
-        // Subquery để đếm số nhân viên (employee_count)
-        // Giả định bảng nhân viên là 'employees' và khóa ngoại là 'department_id'
         $sql = "SELECT d.*, 
                        (SELECT COUNT(*) FROM employees e WHERE e.department_id = d.id) as employee_count
                 FROM departments d 
@@ -68,9 +63,6 @@ class Department extends Model
         return $this->db->query($sql, $params)->fetchAll();
     }
 
-    /**
-     * Đếm tổng số phòng ban
-     */
     public function countAll($keyword = '')
     {
         $sql = "SELECT COUNT(*) as total FROM departments WHERE 1=1";
@@ -83,5 +75,27 @@ class Department extends Model
 
         $result = $this->db->query($sql, $params)->fetch();
         return $result ? (int)$result['total'] : 0;
+    }
+
+    /**
+     * 🔥 HÀM MỚI: Lấy dữ liệu Export (Không phân trang)
+     */
+    public function getAllForExport($keyword = '')
+    {
+        $sql = "SELECT d.*, 
+                       (SELECT COUNT(*) FROM employees e WHERE e.department_id = d.id) as employee_count
+                FROM departments d 
+                WHERE 1=1";
+        
+        $params = [];
+
+        if (!empty($keyword)) {
+            $sql .= " AND d.name LIKE ?";
+            $params[] = "%$keyword%";
+        }
+
+        $sql .= " ORDER BY d.id DESC"; // Lấy hết
+
+        return $this->db->query($sql, $params)->fetchAll();
     }
 }

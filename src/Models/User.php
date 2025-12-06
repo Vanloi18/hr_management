@@ -116,4 +116,28 @@ class User extends Model
         $result = $this->db->query($sql, $params)->fetch();
         return $result ? (int)$result['total'] : 0;
     }
+    /**
+     * Lấy toàn bộ danh sách User theo bộ lọc (Dùng cho Export)
+     */
+    public function getAllForExport($keyword = '', $role = '')
+    {
+        $sql = "SELECT * FROM users WHERE 1=1";
+        $params = [];
+
+        if (!empty($keyword)) {
+            $sql .= " AND (full_name LIKE ? OR email LIKE ?)";
+            $keywordParam = "%$keyword%";
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+        }
+
+        if (!empty($role)) {
+            $sql .= " AND role = ?";
+            $params[] = $role;
+        }
+
+        $sql .= " ORDER BY id DESC"; // Lấy hết, không có LIMIT
+
+        return $this->db->query($sql, $params)->fetchAll();
+    }
 }

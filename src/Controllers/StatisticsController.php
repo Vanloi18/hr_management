@@ -3,8 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Models\Report; // <-- Import Model cũ của bạn
-
+use App\Models\Report;
 // Import thư viện Export
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -16,7 +15,7 @@ use Mpdf\Mpdf;
 class StatisticsController extends Controller
 {
     /**
-     * Hiển thị Dashboard Thống kê (Giữ nguyên logic của bạn)
+     * Hiển thị Dashboard Thống kê
      */
     public function index()
     {
@@ -24,34 +23,29 @@ class StatisticsController extends Controller
 
         $reportModel = new Report();
 
-        // === 1. LẤY DỮ LIỆU TUYỂN DỤNG ===
+        // 1. Lấy dữ liệu
         $totalOpenPositions = $reportModel->getTotalOpenPositions();
         $totalCandidates = $reportModel->getTotalCandidates();
         $totalRecruiters = $reportModel->getTotalRecruiters();
+        $totalActiveEmployees = $reportModel->getTotalActiveEmployees(); 
+        
         $cvsByStatusRaw = $reportModel->getCvsByStatus();
         $positionsByFieldRaw = $reportModel->getPositionsByField();
+        $employeesByDeptRaw = $reportModel->getEmployeesByDepartment();
 
-        // Xử lý dữ liệu biểu đồ CV
-        $cvStatusLabels = array_column($cvsByStatusRaw, 'status');
+        // Xử lý dữ liệu biểu đồ
+        $cvStatusLabels = array_map('ucfirst', array_column($cvsByStatusRaw, 'status'));
         $cvStatusData = array_column($cvsByStatusRaw, 'count');
-        $cvStatusLabels = array_map('ucfirst', $cvStatusLabels);
         
-        // Xử lý dữ liệu biểu đồ Vị trí
         $posFieldLabels = array_column($positionsByFieldRaw, 'field_name');
         $posFieldData = array_column($positionsByFieldRaw, 'count');
         
-        // === 2. LẤY DỮ LIỆU NHÂN SỰ ===
-        $totalActiveEmployees = $reportModel->getTotalActiveEmployees();
-        $employeesByDeptRaw = $reportModel->getEmployeesByDepartment();
-        
-        // Xử lý dữ liệu biểu đồ Nhân sự
         $empDeptLabels = array_column($employeesByDeptRaw, 'department_name');
         $empDeptData = array_column($employeesByDeptRaw, 'count');
         
-        // === 3. CHUẨN BỊ DATA CHO VIEW ===
+        // 2. Chuẩn bị Data
         $data = [
-            'title' => 'Nhóm 2 - Lớp 3',
-            
+            'title' => 'Báo cáo Thống kê',
             'totalOpenPositions' => $totalOpenPositions,
             'totalCandidates' => $totalCandidates,
             'totalRecruiters' => $totalRecruiters,
@@ -61,7 +55,6 @@ class StatisticsController extends Controller
             'cvStatusData' => $cvStatusData,
             'posFieldLabels' => $posFieldLabels,
             'posFieldData' => $posFieldData,
-            
             'empDeptLabels' => $empDeptLabels,
             'empDeptData' => $empDeptData,
 
@@ -69,7 +62,6 @@ class StatisticsController extends Controller
             'positionsByField' => $positionsByFieldRaw 
         ];
 
-        // LOGIC PJAX
         if (isAjaxRequest()) {
             return partial('statistics/index', $data);
         }
@@ -78,65 +70,49 @@ class StatisticsController extends Controller
     }
 
     /**
-     * Chức năng: Xuất Excel Báo cáo Nhân sự theo Phòng ban
+     * Xuất Excel (Số liệu chi tiết)
      */
     public function exportExcel()
     {
         $this->checkAuthentication();
         
-        // 1. Lấy dữ liệu từ Model Report
         $reportModel = new Report();
-        $data = $reportModel->getEmployeesByDepartment(); // Tận dụng method có sẵn
+        $data = $reportModel->getEmployeesByDepartment();
 
-        // 2. Khởi tạo Spreadsheet
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Thống kê nhân sự');
 
-        // 3. Tạo Header
+        // Header
         $headers = ['STT', 'Tên phòng ban', 'Số lượng nhân sự'];
         $sheet->fromArray([$headers], NULL, 'A1');
 
-        // 4. Đổ dữ liệu
+        // Data
         $rows = [];
         $stt = 1;
         $total = 0;
         foreach ($data as $item) {
-            $rows[] = [
-                $stt++,
-                $item['department_name'], // Key khớp với getEmployeesByDepartment()
-                $item['count']
-            ];
+            $rows[] = [$stt++, $item['department_name'], $item['count']];
             $total += $item['count'];
         }
-        
-        // Dòng tổng cộng
         $rows[] = ['', 'TỔNG CỘNG', $total];
 
         $sheet->fromArray($rows, NULL, 'A2');
 
-        // 5. Format giao diện
+        // Style
         $lastRow = count($rows) + 1;
-        
-        // Kẻ bảng
         $sheet->getStyle("A1:C{$lastRow}")->applyFromArray([
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
         ]);
-
-        // Style Header
         $sheet->getStyle('A1:C1')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0d6efd']], // Màu xanh bootstrap
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0d6efd']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
         ]);
-
-        // Style dòng tổng cộng
         $sheet->getStyle("A{$lastRow}:C{$lastRow}")->getFont()->setBold(true);
-
-        // Auto width
         foreach (range('A', 'C') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
 
-        // 6. Xuất file
+        // Output
         $fileName = 'Bao_cao_nhan_su_' . date('dmY_Hi') . '.xlsx';
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $fileName . '"');
@@ -148,56 +124,91 @@ class StatisticsController extends Controller
     }
 
     /**
-     * Chức năng: Xuất PDF Báo cáo
+     * Xuất PDF (Kèm Biểu đồ từ Client gửi lên)
      */
     public function exportPDF()
     {
         $this->checkAuthentication();
 
-        // 1. Lấy dữ liệu
         $reportModel = new Report();
         $deptStats = $reportModel->getEmployeesByDepartment();
         $openPositions = $reportModel->getTotalOpenPositions();
         $activeEmp = $reportModel->getTotalActiveEmployees();
+        $totalCandidates = $reportModel->getTotalCandidates();
 
-        // 2. Tạo HTML Template
+        // Nhận ảnh Chart từ POST (Base64 String)
+        $chartCV = $_POST['chart_cv'] ?? '';
+        $chartEmp = $_POST['chart_emp'] ?? '';
+        $chartPos = $_POST['chart_pos'] ?? '';
+
+        // HTML Template
         $html = '
         <html>
         <head>
             <style>
-                body { font-family: DejaVu Sans, sans-serif; font-size: 13px; }
-                .header { text-align: center; margin-bottom: 20px; }
-                .header h2 { margin: 0; color: #2c3e50; }
-                .meta { text-align: center; color: #666; font-style: italic; font-size: 11px; }
+                body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #333; }
+                .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #0d6efd; padding-bottom: 10px; }
+                .header h2 { margin: 0; color: #0d6efd; text-transform: uppercase; }
+                .meta { text-align: center; color: #666; font-style: italic; font-size: 10px; margin-top: 5px; }
                 
-                .summary-box { border: 1px solid #ddd; padding: 10px; margin-bottom: 20px; background: #f9f9f9; }
+                .summary-box { 
+                    border: 1px solid #ddd; 
+                    padding: 15px; 
+                    margin-bottom: 20px; 
+                    background-color: #f8f9fa; 
+                    border-radius: 5px;
+                }
+                .summary-item { font-size: 14px; margin-bottom: 5px; }
                 
+                .chart-section { text-align: center; margin-bottom: 30px; page-break-inside: avoid; }
+                .chart-title { font-weight: bold; margin-bottom: 10px; color: #555; font-size: 14px; }
+                .chart-img { max-width: 100%; height: auto; border: 1px solid #eee; }
+
                 table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                th { background-color: #0d6efd; color: white; padding: 10px; border: 1px solid #000; }
-                td { padding: 8px; border: 1px solid #444; text-align: center; }
+                th { background-color: #0d6efd; color: white; padding: 10px; border: 1px solid #333; font-size: 12px; }
+                td { padding: 8px; border: 1px solid #444; text-align: center; font-size: 12px; }
                 .text-left { text-align: left; }
-                .total-row { font-weight: bold; background-color: #eee; }
+                .total-row { font-weight: bold; background-color: #e9ecef; }
             </style>
         </head>
         <body>
             <div class="header">
-                <h2>BÁO CÁO THỐNG KÊ TỔNG HỢP</h2>
+                <h2>Báo Cáo Tổng Hợp Hoạt Động</h2>
                 <div class="meta">Ngày xuất: ' . date('d/m/Y H:i') . ' | Người xuất: ' . ($_SESSION['user']['full_name'] ?? 'Admin') . '</div>
             </div>
 
             <div class="summary-box">
-                <strong>Tổng quan nhanh:</strong><br>
-                - Nhân sự đang hoạt động: <b>' . $activeEmp . '</b><br>
-                - Vị trí đang tuyển: <b>' . $openPositions . '</b>
+                <div class="summary-item"><strong>• Nhân sự đang hoạt động:</strong> ' . $activeEmp . ' người</div>
+                <div class="summary-item"><strong>• Vị trí đang tuyển:</strong> ' . $openPositions . ' vị trí</div>
+                <div class="summary-item"><strong>• Tổng hồ sơ ứng viên:</strong> ' . $totalCandidates . ' hồ sơ</div>
             </div>
 
-            <h3>Chi tiết nhân sự theo phòng ban</h3>
+            ';
+            
+            if ($chartEmp) {
+                $html .= '
+                <div class="chart-section">
+                    <div class="chart-title">Biểu đồ 1: Phân bổ Nhân sự theo Phòng ban</div>
+                    <img src="' . $chartEmp . '" class="chart-img" style="width: 500px;" />
+                </div>';
+            }
+
+            if ($chartCV) {
+                $html .= '
+                <div class="chart-section">
+                    <div class="chart-title">Biểu đồ 2: Tỷ lệ Hồ sơ Ứng viên</div>
+                    <img src="' . $chartCV . '" class="chart-img" style="width: 500px;" />
+                </div>';
+            }
+
+            $html .= '
+            <h3>Chi tiết thống kê nhân sự</h3>
             <table>
                 <thead>
                     <tr>
                         <th width="10%">STT</th>
                         <th width="60%">Phòng ban</th>
-                        <th width="30%">Số lượng nhân viên</th>
+                        <th width="30%">Số lượng</th>
                     </tr>
                 </thead>
                 <tbody>';
@@ -220,11 +231,13 @@ class StatisticsController extends Controller
 
         $html .= '</tbody></table></body></html>';
 
-        // 3. Xuất PDF
+        // Xuất PDF
         try {
             $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4']);
+            // Cho phép load ảnh base64 lớn
+            $mpdf->showImageErrors = true; 
             $mpdf->WriteHTML($html);
-            $mpdf->Output('Bao_cao_nhan_su_' . date('dmY') . '.pdf', 'D');
+            $mpdf->Output('Bao_cao_thong_ke_' . date('dmY') . '.pdf', 'D');
         } catch (\Exception $e) {
             echo "Lỗi xuất PDF: " . $e->getMessage();
         }

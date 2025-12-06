@@ -12,15 +12,39 @@
                 <div class="col-md-6 col-lg-5">
                     <form action="<?php echo BASE_URL; ?>/fields" method="GET" class="position-relative">
                         <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
-                        <input type="text" name="keyword" class="form-control form-control-lg ps-5 rounded-pill bg-light border-0" 
+                        <input type="text" name="keyword" 
+                               class="form-control form-control-lg ps-5 rounded-pill bg-light border-0 fs-6" 
                                placeholder="Tìm tên lĩnh vực, mô tả..." 
-                               value="<?php echo isset($keyword) ? e($keyword) : ''; ?>">
+                               value="<?php echo isset($keyword) ? e($keyword) : '' ?>">
                     </form>
                 </div>
+
                 <div class="col-md-6 col-lg-7 text-md-end">
-                    <a href="<?php echo BASE_URL; ?>/fields/create" class="btn btn-primary rounded-pill px-4 py-2 fw-medium shadow-sm">
-                        <i class="bi bi-plus-lg me-1"></i> Thêm Lĩnh vực
-                    </a>
+                    <div class="d-flex gap-2 justify-content-md-end">
+                        
+                        <div class="dropdown">
+                            <button class="btn btn-success rounded-pill px-3 py-2 shadow-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-download me-1"></i> Xuất file
+                            </button>
+                            <ul class="dropdown-menu shadow border-0 rounded-3 mt-2">
+                                <?php $query = http_build_query(['keyword' => $keyword ?? '']); ?>
+                                <li>
+                                    <a class="dropdown-item" href="<?php echo BASE_URL; ?>/fields/export-excel?<?php echo $query; ?>">
+                                        <i class="bi bi-file-earmark-excel text-success me-2"></i> Xuất Excel
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="<?php echo BASE_URL; ?>/fields/export-pdf?<?php echo $query; ?>">
+                                        <i class="bi bi-file-earmark-pdf text-danger me-2"></i> Xuất PDF
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <a href="<?php echo BASE_URL; ?>/fields/create" class="btn btn-primary rounded-pill px-4 py-2 fw-medium shadow-sm">
+                            <i class="bi bi-plus-lg me-1"></i> Thêm mới
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -29,86 +53,70 @@
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" style="font-size: 0.95rem;">
+                <table class="table table-hover align-middle mb-0 custom-table">
                     <thead class="bg-light border-bottom">
                         <tr>
-                            <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small" style="width: 100px;">Mã LV</th>
-                            <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small">Tên Lĩnh vực</th>
-                            <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small">Tin tuyển dụng</th> <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small">Mô tả</th>
-                            <th class="py-3 px-4 text-end text-secondary fw-semibold text-uppercase small" style="width: 150px;">Hành động</th>
+                            <th class="ps-4 py-3 text-secondary text-uppercase fw-bold small opacity-75" style="width: 60px;">ID</th>
+                            <th class="py-3 text-secondary text-uppercase fw-bold small opacity-75">Tên lĩnh vực</th>
+                            <th class="py-3 text-secondary text-uppercase fw-bold small opacity-75">Mô tả</th>
+                            <th class="py-3 text-secondary text-uppercase fw-bold small opacity-75">Thống kê</th>
+                            <th class="pe-4 py-3 text-end text-secondary text-uppercase fw-bold small opacity-75">Hành động</th>
                         </tr>
                     </thead>
-                    
                     <tbody>
-                        <?php foreach ($fields as $field): ?>
-                            <tr id="row-field-<?php echo e($field['id']); ?>" class="border-bottom-dashed">
-                                <td class="px-4 py-3">
-                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-10 px-3 py-2 rounded-pill font-monospace">
-                                        #<?php echo e($field['id']); ?>
-                                    </span>
-                                </td>
-                                
-                                <td class="px-4 py-3">
-                                    <div class="d-flex align-items-center">
-                                        <div class="rounded-3 d-flex align-items-center justify-content-center me-3 bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10" 
-                                             style="width: 45px; height: 45px; font-weight: 700; font-size: 1.1rem;">
-                                            <?php echo strtoupper(mb_substr($field['field_name'], 0, 2)); ?>
+                        <?php if (!empty($fields)): ?>
+                            <?php foreach ($fields as $field): ?>
+                                <tr class="border-bottom-dashed">
+                                    <td class="ps-4 py-3">
+                                        <span class="text-muted small fw-medium font-monospace">#<?php echo e($field['id']); ?></span>
+                                    </td>
+                                    
+                                    <td class="py-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-shape icon-sm bg-primary bg-opacity-10 text-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="bi bi-tags-fill"></i>
+                                            </div>
+                                            <h6 class="mb-0 text-dark fw-bold"><?php echo e($field['field_name']); ?></h6>
                                         </div>
-                                        <div>
-                                            <span class="fw-bold text-dark d-block"><?php echo e($field['field_name']); ?></span>
-                                            <span class="small text-muted">Hoạt động</span>
-                                        </div>
-                                    </div>
-                                </td>
+                                    </td>
 
-                                <td class="px-4 py-3">
-                                    <?php $count = $field['position_count'] ?? 0; ?>
-                                    <?php if ($count > 0): ?>
-                                        <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill border border-info border-opacity-10">
-                                            <i class="bi bi-briefcase-fill me-1"></i> <?php echo $count; ?> Vị trí
+                                    <td>
+                                        <span class="text-secondary small d-inline-block text-truncate" style="max-width: 300px;" title="<?php echo e($field['description']); ?>">
+                                            <?php echo e($field['description'] ?? 'Chưa có mô tả'); ?>
                                         </span>
-                                    <?php else: ?>
-                                        <span class="text-muted small fst-italic ms-1">Chưa có tin</span>
-                                    <?php endif; ?>
-                                </td>
-                                
-                                <td class="px-4 py-3">
-                                    <?php if (!empty($field['description'])): ?>
-                                        <span class="text-secondary small text-truncate d-block" style="max-width: 300px;" title="<?php echo e($field['description']); ?>">
-                                            <?php echo e($field['description']); ?>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge bg-info-subtle text-info px-3 py-2 rounded-pill border border-info border-opacity-10">
+                                            <?php echo $field['position_count'] ?? 0; ?> tin tuyển dụng
                                         </span>
-                                    <?php else: ?>
-                                        <span class="text-muted small fst-italic opacity-50">--</span>
-                                    <?php endif; ?>
-                                </td>
-                                
-                                <td class="px-4 py-3 text-end">
-                                    <div class="d-flex justify-content-end gap-2">
-                                        <a href="<?php echo BASE_URL; ?>/fields/edit?id=<?php echo e($field['id']); ?>" 
-                                           class="btn btn-sm btn-light text-primary border-0 btn-icon" 
-                                           title="Chỉnh sửa" data-bs-toggle="tooltip">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </a>
-                                        
-                                        <form method="POST" action="<?php echo BASE_URL; ?>/fields/delete" 
-                                              class="d-inline-block" onsubmit="return confirm('Bạn có chắc chắn muốn xóa lĩnh vực này?');">
-                                            <input type="hidden" name="id" value="<?php echo e($field['id']); ?>">
-                                            <button type="submit" class="btn btn-sm btn-light text-danger border-0 btn-icon" 
-                                                    title="Xóa lĩnh vực" data-bs-toggle="tooltip">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                        
-                        <?php if (empty($fields)): ?>
+                                    </td>
+                                    
+                                    <td class="pe-4 text-end">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <a href="<?php echo BASE_URL; ?>/fields/edit?id=<?php echo e($field['id']); ?>" 
+                                               class="btn btn-icon btn-light text-primary rounded-circle" 
+                                               data-bs-toggle="tooltip" title="Chỉnh sửa">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </a>
+                                            
+                                            <form action="<?php echo BASE_URL; ?>/fields/delete" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa lĩnh vực này?');">
+                                                <input type="hidden" name="id" value="<?php echo e($field['id']); ?>">
+                                                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
+                                                <button type="submit" class="btn btn-icon btn-light text-danger rounded-circle" data-bs-toggle="tooltip" title="Xóa">
+                                                    <i class="bi bi-trash-fill"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
                             <tr>
                                 <td colspan="5" class="text-center py-5">
                                     <div class="py-4 opacity-50">
-                                        <i class="bi bi-tags text-secondary" style="font-size: 3rem;"></i>
-                                        <p class="text-muted mt-3 mb-2">Chưa có dữ liệu lĩnh vực</p>
+                                        <i class="bi bi-tags display-6 text-secondary"></i>
+                                        <p class="mt-3 mb-0 text-muted">Chưa có lĩnh vực nào được tạo</p>
                                     </div>
                                 </td>
                             </tr>
@@ -116,24 +124,34 @@
                     </tbody>
                 </table>
             </div>
-
+            
             <div class="px-4 py-3 border-top bg-white rounded-bottom-4">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-                    <span class="text-secondary small">
-                        Hiển thị <strong><?php echo count($fields); ?></strong> trên tổng số <strong><?php echo $totalRecords ?? 0; ?></strong> lĩnh vực
-                    </span>
-                    <?php require BASE_PATH . 'views/partials/pagination.view.php'; ?>
-                </div>
+                <?php require BASE_PATH . 'views/partials/pagination.view.php'; ?>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    .table-hover tbody tr:hover { background-color: rgba(0,0,0,0.015); }
-    .border-bottom-dashed { border-bottom: 1px dashed #dee2e6 !important; }
-    .btn-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-    .btn-icon:hover { transform: scale(1.1); filter: brightness(0.95); background-color: #e9ecef; }
+    /* Table & Button Styles */
+    .custom-table td { vertical-align: middle; padding: 1rem 1.5rem; }
+    .table-hover tbody tr:hover { background-color: #f8f9fa; }
+    .btn-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+    .btn-icon:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .bg-info-subtle { background-color: #eff6ff !important; }
+
+    /* Dark Mode Overrides */
+    [data-theme="dark"] .bg-light { background-color: #1e1e1e !important; color: #e0e0e0; }
+    [data-theme="dark"] .text-dark { color: #fff !important; }
+    [data-theme="dark"] .text-secondary { color: #a0a0a5 !important; }
+    [data-theme="dark"] .table { color: #e0e0e0; border-color: #333; }
+    [data-theme="dark"] .table-hover tbody tr:hover { background-color: rgba(255,255,255,0.05); }
+    [data-theme="dark"] .form-control { background-color: #2b2b2b; border-color: #444; color: #fff; }
+    [data-theme="dark"] .btn-light { background-color: rgba(255,255,255,0.1); color: #fff; border: none; }
+    [data-theme="dark"] .bg-white { background-color: #1e1e1e !important; }
+    [data-theme="dark"] .bg-info-subtle { background-color: rgba(13, 202, 240, 0.2) !important; color: #6edff6 !important; border-color: rgba(13, 202, 240, 0.3) !important; }
+    [data-theme="dark"] .pagination .page-link { background-color: #2b2b2b; border-color: #444; color: #fff; }
+    [data-theme="dark"] .pagination .page-item.active .page-link { background-color: #0d6efd; border-color: #0d6efd; }
 </style>
 
 <script>

@@ -8,193 +8,176 @@
 
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4">
-            <form action="<?php echo BASE_URL; ?>/positions" method="GET" class="row g-3">
-                <div class="col-md-5">
-                    <div class="position-relative">
-                        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
-                        <input type="text" name="keyword" class="form-control ps-5 rounded-pill bg-light border-0" 
-                               placeholder="Tìm theo vị trí, tên công ty..." 
-                               value="<?php echo isset($keyword) ? e($keyword) : ''; ?>">
+            <div class="row g-3 align-items-center justify-content-between">
+                
+                <div class="col-lg-7">
+                    <form action="<?php echo BASE_URL; ?>/positions" method="GET" class="row g-2">
+                        <div class="col-md-5">
+                            <div class="position-relative">
+                                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+                                <input type="text" name="keyword" class="form-control ps-5 rounded-pill bg-light border-0" 
+                                       placeholder="Tìm vị trí, công ty..." 
+                                       value="<?php echo isset($keyword) ? e($keyword) : '' ?>">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select name="recruiter_id" class="form-select rounded-pill bg-light border-0 cursor-pointer">
+                                <option value="">-- Tất cả Công ty --</option>
+                                <?php if(isset($recruitersList)): ?>
+                                    <?php foreach ($recruitersList as $rec): ?>
+                                        <option value="<?php echo $rec['id']; ?>" <?php echo (isset($recruiter_id) && $recruiter_id == $rec['id']) ? 'selected' : ''; ?>>
+                                            <?php echo e($rec['company_name']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-light w-100 rounded-pill border-0 shadow-sm">
+                                <i class="bi bi-funnel"></i> Lọc
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="col-lg-5 text-lg-end">
+                    <div class="d-flex gap-2 justify-content-lg-end">
+                        
+                        <div class="dropdown">
+                            <button class="btn btn-success rounded-pill px-3 py-2 shadow-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-download me-1"></i> Xuất file
+                            </button>
+                            <ul class="dropdown-menu shadow border-0 rounded-3 mt-2">
+                                <?php 
+                                    $query = http_build_query([
+                                        'keyword' => $keyword ?? '',
+                                        'status' => $status ?? '',
+                                        'recruiter_id' => $recruiter_id ?? ''
+                                    ]);
+                                ?>
+                                <li>
+                                    <a class="dropdown-item" href="<?php echo BASE_URL; ?>/positions/export-excel?<?php echo $query; ?>">
+                                        <i class="bi bi-file-earmark-excel text-success me-2"></i> Xuất Excel
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="<?php echo BASE_URL; ?>/positions/export-pdf?<?php echo $query; ?>">
+                                        <i class="bi bi-file-earmark-pdf text-danger me-2"></i> Xuất PDF
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <a href="<?php echo BASE_URL; ?>/positions/create" class="btn btn-primary rounded-pill px-4 py-2 fw-medium shadow-sm">
+                            <i class="bi bi-plus-lg me-1"></i> Đăng tin
+                        </a>
                     </div>
                 </div>
-
-                <div class="col-md-3">
-                    <select name="recruiter_id" class="form-select rounded-pill bg-light border-0 cursor-pointer">
-                        <option value="">-- Tất cả Công ty --</option>
-                        <?php if(isset($recruitersList)): ?>
-                            <?php foreach ($recruitersList as $rec): ?>
-                                <option value="<?php echo $rec['id']; ?>" 
-                                    <?php echo (isset($recruiter_id) && $recruiter_id == $rec['id']) ? 'selected' : ''; ?>>
-                                    <?php echo e($rec['company_name']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <select name="status" class="form-select rounded-pill bg-light border-0 cursor-pointer">
-                        <option value="">-- Trạng thái --</option>
-                        <option value="open" <?php echo (isset($status) && $status === 'open') ? 'selected' : ''; ?>>Đang mở</option>
-                        <option value="closed" <?php echo (isset($status) && $status === 'closed') ? 'selected' : ''; ?>>Đã đóng</option>
-                    </select>
-                </div>
-
-                <div class="col-md-2 d-flex gap-2">
-                    <button type="submit" class="btn btn-light rounded-pill border-0 flex-fill" data-bs-toggle="tooltip" title="Lọc dữ liệu">
-                        <i class="bi bi-funnel"></i>
-                    </button>
-                    <a href="<?php echo BASE_URL; ?>/positions/create" class="btn btn-dark rounded-pill flex-fill fw-medium shadow-sm text-nowrap">
-                        <i class="bi bi-plus-lg"></i> Đăng tin
-                    </a>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" style="font-size: 0.95rem;">
+                <table class="table table-hover align-middle mb-0 custom-table">
                     <thead class="bg-light border-bottom">
                         <tr>
-                            <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small" style="width: 60px;">ID</th>
-                            <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small" style="min-width: 250px;">Vị trí tuyển dụng</th>
-                            <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small">Công ty / Lĩnh vực</th>
-                            <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small">Trạng thái</th>
-                            <th class="py-3 px-4 text-secondary fw-semibold text-uppercase small">Người tạo</th>
-                            <th class="py-3 px-4 text-end text-secondary fw-semibold text-uppercase small" style="width: 160px;">Hành động</th>
+                            <th class="ps-4" style="width: 50px;">ID</th>
+                            <th style="width: 30%;">Vị trí tuyển dụng</th>
+                            <th>Công ty</th>
+                            <th>Lĩnh vực</th>
+                            <th>Trạng thái</th>
+                            <th class="pe-4 text-end">Hành động</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($positions as $position): ?>
-                            <tr id="row-position-<?php echo e($position['id']); ?>" class="border-bottom-dashed">
-                                <td class="px-4 py-3">
-                                    <span class="text-muted font-monospace small">#<?php echo e($position['id']); ?></span>
-                                </td>
-
-                                <td class="px-4 py-3">
-                                    <div class="d-flex align-items-start">
-                                        <div class="rounded-2 d-flex align-items-center justify-content-center me-3 text-primary bg-primary bg-opacity-10 flex-shrink-0" 
-                                             style="width: 40px; height: 40px;">
-                                            <i class="bi bi-briefcase fs-6"></i>
+                        <?php if (!empty($positions)): ?>
+                            <?php foreach ($positions as $pos): ?>
+                                <tr class="border-bottom-dashed" id="row-pos-<?php echo $pos['id']; ?>">
+                                    <td class="ps-4">
+                                        <span class="text-muted small fw-medium font-monospace">#<?php echo e($pos['id']); ?></span>
+                                    </td>
+                                    
+                                    <td class="py-3">
+                                        <h6 class="mb-1 text-dark fw-bold"><?php echo e($pos['title']); ?></h6>
+                                        <div class="small text-secondary">
+                                            <i class="bi bi-cash me-1"></i><?php echo e($pos['salary_range'] ?? 'Thỏa thuận'); ?>
+                                            <span class="mx-1">•</span>
+                                            <i class="bi bi-geo-alt"></i> <?php echo e($pos['location'] ?? 'Toàn quốc'); ?>
                                         </div>
-                                        <div>
-                                            <span class="fw-bold text-dark d-block mb-1">
-                                                <?php echo e($position['title']); ?>
+                                    </td>
+
+                                    <td><span class="fw-medium text-dark"><?php echo e($pos['company_name']); ?></span></td>
+                                    
+                                    <td><span class="badge bg-light text-dark border fw-normal"><?php echo e($pos['field_name']); ?></span></td>
+
+                                    <td>
+                                        <?php if($pos['status'] === 'open'): ?>
+                                            <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill border border-success border-opacity-10">
+                                                <i class="bi bi-check-circle me-1"></i>Đang tuyển
                                             </span>
-                                            <?php if (!empty($position['description'])): ?>
-                                                <p class="text-muted small mb-0 text-truncate" style="max-width: 250px;">
-                                                    <?php echo e(mb_substr(strip_tags($position['description']), 0, 50)); ?>...
-                                                </p>
-                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary-subtle text-secondary px-3 py-2 rounded-pill border border-secondary border-opacity-10">
+                                                <i class="bi bi-x-circle me-1"></i>Đã đóng
+                                            </span>
+                                        <?php endif; ?>
+                                    </td>
+                                    
+                                    <td class="pe-4 text-end">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <a href="<?php echo BASE_URL; ?>/positions/edit?id=<?php echo e($pos['id']); ?>" 
+                                               class="btn btn-icon btn-light text-primary rounded-circle" data-bs-toggle="tooltip" title="Sửa">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </a>
+                                            
+                                            <form action="<?php echo BASE_URL; ?>/positions/delete" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tin này?');">
+                                                <input type="hidden" name="id" value="<?php echo e($pos['id']); ?>">
+                                                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
+                                                <button type="submit" class="btn btn-icon btn-light text-danger rounded-circle" data-bs-toggle="tooltip" title="Xóa">
+                                                    <i class="bi bi-trash-fill"></i>
+                                                </button>
+                                            </form>
                                         </div>
-                                    </div>
-                                </td>
-
-                                <td class="px-4 py-3">
-                                    <div class="d-flex flex-column gap-1">
-                                        <span class="text-dark fw-medium small">
-                                            <i class="bi bi-building me-1 text-secondary"></i>
-                                            <?php echo e($position['company_name'] ?? 'Chưa cập nhật'); ?>
-                                        </span>
-                                        <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-10 fw-normal align-self-start">
-                                            <?php echo e($position['field_name'] ?? 'N/A'); ?>
-                                        </span>
-                                    </div>
-                                </td>
-
-                                <td class="px-4 py-3">
-                                    <?php if ($position['status'] === 'open'): ?>
-                                        <span class="badge bg-success bg-opacity-10 text-success px-2 py-1 rounded-2 border border-success border-opacity-10">
-                                            <i class="bi bi-check-circle-fill me-1"></i>Đang mở
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="badge bg-secondary bg-opacity-10 text-secondary px-2 py-1 rounded-2 border border-secondary border-opacity-10">
-                                            <i class="bi bi-lock-fill me-1"></i>Đã đóng
-                                        </span>
-                                    <?php endif; ?>
-                                </td>
-
-                                <td class="px-4 py-3">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center text-secondary fw-bold small" 
-                                             style="width: 32px; height: 32px;">
-                                            <?php echo strtoupper(substr($position['created_by_name'] ?? 'A', 0, 1)); ?>
-                                        </div>
-                                        <span class="small text-secondary"><?php echo e($position['created_by_name'] ?? 'Admin'); ?></span>
-                                    </div>
-                                </td>
-
-                                <td class="px-4 py-3 text-end">
-                                    <div class="d-flex justify-content-end gap-2">
-                                        <a href="<?php echo BASE_URL; ?>/candidates/create?position_id=<?php echo e($position['id']); ?>" 
-                                           class="btn btn-sm btn-light text-success border-0 btn-icon" 
-                                           title="Thêm hồ sơ ứng viên" data-bs-toggle="tooltip">
-                                            <i class="bi bi-person-plus-fill"></i>
-                                        </a>
-
-                                        <a href="<?php echo BASE_URL; ?>/positions/edit?id=<?php echo e($position['id']); ?>" 
-                                           class="btn btn-sm btn-light text-primary border-0 btn-icon" 
-                                           title="Chỉnh sửa" data-bs-toggle="tooltip">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-
-                                        <form method="POST" action="<?php echo BASE_URL; ?>/positions/delete" class="d-inline-block" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tin tuyển dụng này?');">
-                                            <input type="hidden" name="id" value="<?php echo e($position['id']); ?>">
-                                            <button type="submit" class="btn btn-sm btn-light text-danger border-0 btn-icon" 
-                                                    title="Xóa tin" data-bs-toggle="tooltip">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-
-                        <?php if (empty($positions)): ?>
-                            <tr>
-                                <td colspan="6" class="text-center py-5">
-                                    <div class="py-4 opacity-50">
-                                        <i class="bi bi-clipboard-data" style="font-size: 3rem;"></i>
-                                        <p class="text-muted mt-3 mb-2">Không tìm thấy tin tuyển dụng nào</p>
-                                        <a href="<?php echo BASE_URL; ?>/positions/create" class="btn btn-sm btn-dark rounded-pill px-3">
-                                            Đăng tin ngay
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr><td colspan="6" class="text-center py-5 text-muted">Chưa có tin tuyển dụng nào.</td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
             </div>
             
             <div class="px-4 py-3 border-top bg-white rounded-bottom-4">
-    <?php require BASE_PATH . 'views/partials/pagination.view.php'; ?>
-</div>
+                <?php require BASE_PATH . 'views/partials/pagination.view.php'; ?>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
-    .table-hover tbody tr:hover { background-color: rgba(0,0,0,0.015); }
-    .border-bottom-dashed { border-bottom: 1px dashed #dee2e6 !important; }
-    .btn-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-    .btn-icon:hover { transform: scale(1.1); filter: brightness(0.95); background-color: #e9ecef; }
-    .text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .cursor-pointer { cursor: pointer; }
-    
-    /* Pagination Active Style */
-    .pagination .page-item.active .page-link {
-        background-color: #212529; /* Màu dark theo tông của trang này */
-        border-color: #212529;
-        color: white !important;
-    }
+    .custom-table td { vertical-align: middle; padding: 1rem 1.5rem; }
+    .table-hover tbody tr:hover { background-color: #f8f9fa; }
+    .btn-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .btn-icon:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .bg-success-subtle { background-color: #d1e7dd !important; }
+    .bg-secondary-subtle { background-color: #e2e3e5 !important; }
+
+    /* Dark Mode Overrides */
+    [data-theme="dark"] .bg-light { background-color: #1e1e1e !important; color: #e0e0e0; }
+    [data-theme="dark"] .text-dark { color: #fff !important; }
+    [data-theme="dark"] .text-secondary { color: #a0a0a5 !important; }
+    [data-theme="dark"] .table { color: #e0e0e0; border-color: #333; }
+    [data-theme="dark"] .table-hover tbody tr:hover { background-color: rgba(255,255,255,0.05); }
+    [data-theme="dark"] .form-control, [data-theme="dark"] .form-select { background-color: #2b2b2b; border-color: #444; color: #fff; }
+    [data-theme="dark"] .btn-light { background-color: rgba(255,255,255,0.1); color: #fff; border: none; }
+    [data-theme="dark"] .bg-white { background-color: #1e1e1e !important; }
+    [data-theme="dark"] .bg-success-subtle { background-color: rgba(25, 135, 84, 0.2) !important; color: #75b798; border-color: #198754; }
+    [data-theme="dark"] .bg-secondary-subtle { background-color: rgba(108, 117, 125, 0.2) !important; color: #a7acb1; border-color: #6c757d; }
 </style>
 
 <script>
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) { return new bootstrap.Tooltip(tooltipTriggerEl) })
 </script>

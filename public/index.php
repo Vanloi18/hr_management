@@ -29,6 +29,8 @@
     $router->get('/users/edit', 'UserController@edit');   
     $router->post('/users/update', 'UserController@update');
     $router->post('/users/delete', 'UserController@destroy');
+    $router->get('/users/export-excel', 'UserController@exportExcel');
+    $router->get('/users/export-pdf', 'UserController@exportPDF');
 
     // ----- Routes cho Quản lý Phòng ban (Admin & HR) -----
     $router->get('/departments', 'DepartmentController@index');
@@ -38,6 +40,9 @@
     $router->post('/departments/update', 'DepartmentController@update');
     $router->post('/departments/delete', 'DepartmentController@destroy');
     $router->get('/departments/employees', 'DepartmentController@apiGetEmployees');
+    $router->get('/departments/export-excel', 'DepartmentController@exportExcel');
+    $router->get('/departments/export-pdf', 'DepartmentController@exportPDF');
+    $router->get('/departments/api/employees', 'DepartmentController@apiGetEmployees'); // API cho Modal
     
     // ----- Routes cho Quản lý Nhân viên (Admin & HR) -----
     $router->get('/employees', 'EmployeeController@index');
@@ -56,6 +61,7 @@
     $router->get('/recruiters/edit', 'RecruiterController@edit');
     $router->post('/recruiters/update', 'RecruiterController@update');
     $router->post('/recruiters/delete', 'RecruiterController@destroy');
+    $router->get('/recruiters/export-excel', 'RecruiterController@exportExcel');
 
     // ----- Routes cho Quản lý Lĩnh vực (Admin & HR) -----
     $router->get('/fields', 'FieldController@index');
@@ -64,6 +70,8 @@
     $router->get('/fields/edit', 'FieldController@edit');
     $router->post('/fields/update', 'FieldController@update');
     $router->post('/fields/delete', 'FieldController@destroy');
+    $router->get('/fields/export-excel', 'FieldController@exportExcel');
+    $router->get('/fields/export-pdf', 'FieldController@exportPDF');
 
     // ----- Routes cho Quản lý Vị trí (Admin & HR) -----
     $router->get('/positions', 'PositionController@index');
@@ -72,6 +80,8 @@
     $router->get('/positions/edit', 'PositionController@edit');
     $router->post('/positions/update', 'PositionController@update');
     $router->post('/positions/delete', 'PositionController@destroy');
+    $router->get('/positions/export-excel', 'PositionController@exportExcel');
+    $router->get('/positions/export-pdf', 'PositionController@exportPDF');
 
     // ----- Routes cho Quản lý Ứng viên (Admin & HR) -----
     $router->get('/candidates', 'CandidateController@index');
@@ -86,12 +96,11 @@
     // ----- Routes cho Thống kê (Admin & HR) -----
     $router->get('/statistics', 'StatisticsController@index');
     $router->get('/statistics/export-excel', 'StatisticsController@exportExcel');
-    $router->get('/statistics/export-pdf', 'StatisticsController@exportPDF');
+    $router->post('/statistics/export-pdf', 'StatisticsController@exportPDF');
 
     // Routes cho Cài đặt (Settings)
     $router->get('/settings', 'SettingController@index');
     $router->post('/settings/update', 'SettingController@update');
-    // Xử lý POST từng tab
     $router->post('/settings/update', 'SettingController@update'); // Tab 1: Cài đặt chung
 
     // ----- Route mặc định (Trang chủ / Dashboard) -----

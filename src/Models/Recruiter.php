@@ -101,4 +101,22 @@ class Recruiter extends Model
     {
         return $this->db->query("DELETE FROM recruiters WHERE id = :id", ['id' => $id]);
     }
+
+    // Thêm vào class Recruiter
+    public function getAllForExport($keyword = '')
+    {
+        $sql = "SELECT * FROM recruiters WHERE 1=1";
+        $params = [];
+
+        if (!empty($keyword)) {
+            $sql .= " AND (company_name LIKE ? OR email LIKE ? OR contact_person LIKE ?)";
+            $keywordParam = "%$keyword%";
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+            $params[] = $keywordParam;
+        }
+
+        $sql .= " ORDER BY id DESC"; // Lấy tất cả
+        return $this->db->query($sql, $params)->fetchAll();
+    }
 }

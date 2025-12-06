@@ -21,6 +21,10 @@
                     </form>
                 </div>
                 <div class="col-md-6 col-lg-7 text-md-end">
+                    <a href="<?php echo BASE_URL; ?>/recruiters/export-excel?keyword=<?php echo e($keyword ?? ''); ?>" 
+                           class="btn btn-success rounded-pill px-4 py-2 fw-medium shadow-sm">
+                            <i class="bi bi-file-earmark-excel me-1"></i> Xuất Excel
+                        </a>
                     <a href="<?php echo BASE_URL; ?>/recruiters/create" class="btn btn-primary rounded-pill px-4 py-2 fw-medium shadow-sm">
                         <i class="bi bi-building-add me-1"></i> Thêm mới
                     </a>
