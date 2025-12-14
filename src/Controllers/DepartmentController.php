@@ -128,19 +128,23 @@ class DepartmentController extends Controller
             $id = $_POST['id'] ?? null;
             if (!$id) throw new \Exception('Thiếu ID.');
 
+            $errorMsg = $this->departmentModel->hasDependencies($id);
+            
+            if ($errorMsg !== false) {
+                echo json_encode([
+                    'success' => false, 
+                    'message' => $errorMsg . " Vui lòng điều chuyển nhân sự trước khi xóa."
+                ]);
+                exit();
+            }
             $this->departmentModel->delete($id); 
 
-            echo json_encode(['success' => true, 'message' => 'Đã xóa phòng ban.']);
+            echo json_encode(['success' => true, 'message' => 'Đã xóa phòng ban thành công.']);
             exit();
 
         } catch (\Exception $e) {
-            // Xử lý lỗi khóa ngoại (nếu có nhân viên trong phòng)
-            if ($e->getCode() === '23000') {
-                echo json_encode(['success' => false, 'message' => 'Không thể xóa: Vẫn còn nhân viên trong phòng ban này.']);
-            } else {
-                http_response_code(500);
-                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-            }
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống: ' . $e->getMessage()]);
             exit();
         }
     }
@@ -171,9 +175,7 @@ class DepartmentController extends Controller
         }
     }
 
-    /**
-     * Xuất Excel
-     */
+
     public function exportExcel()
     {
         $this->checkAuthentication();
@@ -220,9 +222,6 @@ class DepartmentController extends Controller
         exit;
     }
 
-    /**
-     * Xuất PDF
-     */
     public function exportPDF()
     {
         $this->checkAuthentication();

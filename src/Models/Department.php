@@ -98,4 +98,18 @@ class Department extends Model
 
         return $this->db->query($sql, $params)->fetchAll();
     }
+
+    public function hasDependencies($id)
+{
+    // 1. Kiểm tra bảng nhân viên
+    $sqlEmp = "SELECT COUNT(*) as total FROM employees WHERE department_id = :id";
+    $countEmp = $this->db->query($sqlEmp, ['id' => $id])->fetch()['total'] ?? 0;
+
+    if ($countEmp > 0) {
+        return "Không thể xóa! Đang có $countEmp nhân viên thuộc phòng ban này.";
+    }
+
+
+    return false; 
+}
 }

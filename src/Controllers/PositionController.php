@@ -209,6 +209,8 @@ class PositionController extends Controller
             'field_id' => 'required',
             'description' => 'required',
             'requirements' => 'required',
+            'salary_range' => 'required', 
+            'location'     => 'required',
         ];
 
         $validator = new Validator();
@@ -265,6 +267,8 @@ class PositionController extends Controller
             'field_id' => 'required',
             'description' => 'required',
             'requirements' => 'required',
+            'salary_range' => 'required',
+            'location'     => 'required',
         ];
 
         $validator = new Validator();

@@ -12,6 +12,34 @@
     require BASE_PATH . 'src/Core/functions.php';
 
     $router = new \App\Core\Router();
+    $uri = '/' . ($_GET['uri'] ?? '');
+    if (strlen($uri) > 1) {
+        $uri = rtrim($uri, '/');
+    }
+    if (strpos($uri, '/careers') !== false) {
+    
+    // Import Controller thủ công (để chắc chắn load được file)
+    require_once BASE_PATH . 'src/Controllers/PublicController.php';
+    
+    // Vì class PublicController không có namespace (theo code cũ mình đưa), 
+    // nên gọi trực tiếp. Nếu bạn đã thêm namespace App\Controllers thì sửa thành:
+    // $controller = new \App\Controllers\PublicController();
+    $controller = new \App\Controllers\PublicController();
+
+    if (strpos($uri, '/careers/apply') !== false) {
+        $controller->apply();
+    } 
+    elseif (strpos($uri, '/careers/detail') !== false) {
+        $controller->detail();
+    }
+    else {
+        // Mặc định vào danh sách việc làm
+        $controller->index();
+    }
+    
+    exit; // QUAN TRỌNG: Dừng code tại đây, không cho chạy tiếp xuống Router Admin bên dưới
+}
+
     $router->get('/login', 'AuthController@index');
     $router->post('/login', 'AuthController@login');
     $router->get('/logout', 'AuthController@logout');
@@ -105,9 +133,7 @@
 
     // ----- Route mặc định (Trang chủ / Dashboard) -----
     $router->get('/', 'DashboardController@index');
-    
-    // 6. Lấy URI và Method từ request
-    $uri = '/' . ($_GET['uri'] ?? '');
+
 
 
     if (strlen($uri) > 1) {

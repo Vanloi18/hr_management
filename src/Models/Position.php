@@ -41,42 +41,53 @@ class Position extends Model
 
     public function create($data)
     {
-        return $this->db->query(
-            "INSERT INTO positions (title, recruiter_id, field_id, description, requirements, status, created_by_user_id) 
-             VALUES (:title, :recruiter_id, :field_id, :description, :requirements, :status, :created_by_user_id)",
-            [
-                'title' => $data['title'],
-                'recruiter_id' => $data['recruiter_id'],
-                'field_id' => $data['field_id'],
-                'description' => $data['description'],
-                'requirements' => $data['requirements'],
-                'status' => $data['status'],
-                'created_by_user_id' => $data['created_by_user_id']
-            ]
-        );
+        // [QUAN TRỌNG] Bổ sung salary_range và location vào câu lệnh INSERT
+        $sql = "INSERT INTO positions 
+                (title, recruiter_id, field_id, description, requirements, salary_range, location, status, created_at) 
+                VALUES 
+                (:title, :recruiter_id, :field_id, :description, :requirements, :salary_range, :location, :status, NOW())";
+
+        $params = [
+            'title'        => $data['title'],
+            'recruiter_id' => $data['recruiter_id'],
+            'field_id'     => $data['field_id'],
+            'description'  => $data['description'],
+            'requirements' => $data['requirements'],
+            'salary_range' => $data['salary_range'] ?? 'Thỏa thuận', // Giá trị mặc định nếu null
+            'location'     => $data['location'] ?? 'Toàn quốc',     // Giá trị mặc định nếu null
+            'status'       => $data['status'] ?? 'open',
+        ];
+
+        return $this->db->query($sql, $params);
     }
 
     public function update($id, $data)
     {
-        return $this->db->query(
-            "UPDATE positions SET 
-                title = :title, 
+        // [QUAN TRỌNG] Bổ sung salary_range và location vào câu lệnh UPDATE
+        $sql = "UPDATE positions SET 
+                title        = :title, 
                 recruiter_id = :recruiter_id, 
-                field_id = :field_id, 
-                description = :description, 
-                requirements = :requirements, 
-                status = :status 
-             WHERE id = :id",
-            [
-                'title' => $data['title'],
-                'recruiter_id' => $data['recruiter_id'],
-                'field_id' => $data['field_id'],
-                'description' => $data['description'],
-                'requirements' => $data['requirements'],
-                'status' => $data['status'],
-                'id' => $id
-            ]
-        );
+                field_id     = :field_id, 
+                description  = :description, 
+                requirements = :requirements,
+                salary_range = :salary_range, 
+                location     = :location,
+                status       = :status
+                WHERE id = :id";
+        
+        $params = [
+            'id'           => $id,
+            'title'        => $data['title'],
+            'recruiter_id' => $data['recruiter_id'],
+            'field_id'     => $data['field_id'],
+            'description'  => $data['description'],
+            'requirements' => $data['requirements'],
+            'salary_range' => $data['salary_range'],
+            'location'     => $data['location'],
+            'status'       => $data['status']
+        ];
+
+        return $this->db->query($sql, $params);
     }
 
     public function delete($id)
@@ -84,26 +95,21 @@ class Position extends Model
         return $this->db->query("DELETE FROM positions WHERE id = :id", ['id' => $id]);
     }
 
-    /**
-     * Lấy danh sách tin tuyển dụng: Phân trang + Tìm kiếm + Filter
-     */
+
     public function getPaginated($keyword = '', $status = '', $recruiter_id = '', $limit = 10, $offset = 0)
     {
-        // SELECT với LEFT JOIN để lấy thông tin từ các bảng liên quan
-        // Giả định bảng lĩnh vực tên là 'fields' và bảng user tên là 'users'
+        // [QUAN TRỌNG] Phải SELECT p.* để lấy hết cột (bao gồm salary_range, location)
         $sql = "SELECT p.*, 
                        r.company_name, 
-                       f.field_name as field_name, 
-                       u.full_name as created_by_name
+                       f.field_name
                 FROM positions p
                 LEFT JOIN recruiters r ON p.recruiter_id = r.id
                 LEFT JOIN fields f ON p.field_id = f.id
-                LEFT JOIN users u ON p.created_by_user_id = u.id
                 WHERE 1=1";
         
         $params = [];
 
-        // 1. Tìm kiếm (Theo Tiêu đề tin hoặc Tên công ty)
+        // 1. Tìm kiếm
         if (!empty($keyword)) {
             $sql .= " AND (p.title LIKE ? OR r.company_name LIKE ?)";
             $keywordParam = "%$keyword%";
@@ -111,13 +117,13 @@ class Position extends Model
             $params[] = $keywordParam;
         }
 
-        // 2. Lọc theo Trạng thái (open/closed)
+        // 2. Filter Trạng thái
         if (!empty($status)) {
             $sql .= " AND p.status = ?";
             $params[] = $status;
         }
 
-        // 3. Lọc theo Nhà tuyển dụng (Công ty)
+        // 3. Filter Công ty
         if (!empty($recruiter_id)) {
             $sql .= " AND p.recruiter_id = ?";
             $params[] = $recruiter_id;

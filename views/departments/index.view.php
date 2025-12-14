@@ -207,45 +207,6 @@
         });
     });
 
-    document.addEventListener('click', function(e) {
-        // Tìm nút xóa
-        const button = e.target.closest('.btn-delete');
-        if (!button) return;
-
-        e.preventDefault();
-
-        if(!confirm('Bạn có chắc chắn muốn xóa phòng ban này không?')) return;
-
-        // Tìm form chứa nút bấm để lấy dữ liệu
-        const form = button.closest('form');
-        const id = form.querySelector('input[name="id"]').value;
-        const token = form.querySelector('input[name="csrf_token"]').value;
-        const row = document.getElementById('row-dept-' + id);
-
-        if(row) row.style.opacity = '0.5';
-
-        fetch('<?php echo BASE_URL; ?>/departments/delete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'id=' + encodeURIComponent(id) + '&csrf_token=' + encodeURIComponent(token)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.success) { 
-                if(row) row.remove(); 
-                alert(data.message); 
-            } else { 
-                if(row) row.style.opacity = '1';
-                alert(data.message); 
-            }
-        })
-        .catch(err => {
-            if(row) row.style.opacity = '1';
-            console.error(err);
-            alert('Lỗi kết nối server');
-        });
-    });
-
     // 3. Xem danh sách nhân viên (Modal)
     document.addEventListener('click', function(e) {
         const btn = e.target.closest('.view-employees-btn');

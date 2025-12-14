@@ -1,8 +1,6 @@
 <?php
-// Lấy đường dẫn URI hiện tại để active menu
 $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-// Logic xác định module active (Giữ nguyên logic của bạn)
 $isAdminModule = (
     strpos($currentPath, '/users') !== false ||
     strpos($currentPath, '/recruiters') !== false ||
@@ -13,12 +11,19 @@ $isAdminModule = (
 <aside class="sidebar d-flex flex-column" style="min-height: 100vh;">
     
     <div class="p-3">
-        <a class="sidebar-brand ajax-link d-flex align-items-center justify-content-center" href="#" 
-           data-url="<?php echo BASE_URL; ?>/" 
-           data-title="HR-Management">
-            <i class="bi bi-person-workspace text-primary me-2"></i> HR-System
-        </a>
-    </div>
+    <?php 
+        $brandName = (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin') 
+                     ? 'Admin Workspace' 
+                     : 'HR-System'; 
+    ?>
+
+    <a class="sidebar-brand ajax-link d-flex align-items-center justify-content-center" href="#" 
+       data-url="<?php echo BASE_URL; ?>/" 
+       data-title="<?php echo $brandName; ?>"> <i class="bi bi-person-workspace text-primary me-2"></i> 
+        
+        <span class="font-weight-bold"><?php echo $brandName; ?></span>
+    </a>
+</div>
     
     <div class="flex-grow-1 px-2 pb-3">
         <ul class="nav flex-column gap-1">

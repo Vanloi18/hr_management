@@ -126,6 +126,14 @@
                                     
                                     <td class="pe-4 text-end">
                                         <div class="d-flex justify-content-end gap-2">
+                                            <button type="button" 
+                                                    class="btn btn-icon btn-light text-info rounded-circle" 
+                                                    data-bs-toggle="tooltip" 
+                                                    title="Xem chi tiết"
+                                                    onclick="showDetailModal(<?php echo htmlspecialchars(json_encode($pos), ENT_QUOTES, 'UTF-8'); ?>)">
+                                                <i class="bi bi-eye-fill"></i>
+                                            </button>
+                                            
                                             <a href="<?php echo BASE_URL; ?>/positions/edit?id=<?php echo e($pos['id']); ?>" 
                                                class="btn btn-icon btn-light text-primary rounded-circle" data-bs-toggle="tooltip" title="Sửa">
                                                 <i class="bi bi-pencil-fill"></i>
@@ -156,6 +164,140 @@
     </div>
 </div>
 
+<!-- Modal Chi tiết -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+                <h5 class="modal-title fw-bold" id="detailModalLabel">
+                    <i class="bi bi-info-circle me-2"></i>Chi tiết tin tuyển dụng
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-4">
+                    <!-- Thông tin cơ bản -->
+                    <div class="col-12">
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary bg-opacity-10 rounded-3 p-3">
+                                    <i class="bi bi-briefcase-fill text-primary fs-3"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h4 class="fw-bold text-dark mb-2" id="detail-title"></h4>
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill" id="detail-status-badge"></span>
+                                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill" id="detail-field"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grid thông tin -->
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-building text-primary me-2"></i>
+                                <small class="text-muted text-uppercase fw-semibold">Công ty</small>
+                            </div>
+                            <p class="fw-medium text-dark mb-0" id="detail-company"></p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-cash-stack text-success me-2"></i>
+                                <small class="text-muted text-uppercase fw-semibold">Mức lương</small>
+                            </div>
+                            <p class="fw-medium text-dark mb-0" id="detail-salary"></p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-geo-alt-fill text-danger me-2"></i>
+                                <small class="text-muted text-uppercase fw-semibold">Địa điểm</small>
+                            </div>
+                            <p class="fw-medium text-dark mb-0" id="detail-location"></p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-calendar-check text-info me-2"></i>
+                                <small class="text-muted text-uppercase fw-semibold">Hạn nộp</small>
+                            </div>
+                            <p class="fw-medium text-dark mb-0" id="detail-deadline"></p>
+                        </div>
+                    </div>
+
+                    <!-- Mô tả công việc -->
+                    <div class="col-12">
+                        <div class="card bg-light border-0 rounded-3">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-card-text text-primary me-2 fs-5"></i>
+                                    <h6 class="fw-bold mb-0">Mô tả công việc</h6>
+                                </div>
+                                <div class="text-dark" id="detail-description"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Yêu cầu -->
+                    <div class="col-12">
+                        <div class="card bg-light border-0 rounded-3">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-list-check text-warning me-2 fs-5"></i>
+                                    <h6 class="fw-bold mb-0">Yêu cầu ứng viên</h6>
+                                </div>
+                                <div class="text-dark" id="detail-requirements"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quyền lợi -->
+                    <div class="col-12">
+                        <div class="card bg-light border-0 rounded-3">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-gift text-success me-2 fs-5"></i>
+                                    <h6 class="fw-bold mb-0">Quyền lợi</h6>
+                                </div>
+                                <div class="text-dark" id="detail-benefits"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Metadata -->
+                    <div class="col-12">
+                        <div class="border-top pt-3">
+                            <div class="row g-2 text-muted small">
+                                <div class="col-md-6">
+                                    <i class="bi bi-hash me-1"></i><strong>ID:</strong> <span id="detail-id"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <i class="bi bi-clock me-1"></i><strong>Ngày đăng:</strong> <span id="detail-created"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light rounded-bottom-4">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-1"></i>Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
     .custom-table td { vertical-align: middle; padding: 1rem 1.5rem; }
     .table-hover tbody tr:hover { background-color: #f8f9fa; }
@@ -163,6 +305,19 @@
     .btn-icon:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
     .bg-success-subtle { background-color: #d1e7dd !important; }
     .bg-secondary-subtle { background-color: #e2e3e5 !important; }
+    .bg-primary-subtle { background-color: #cfe2ff !important; }
+    
+    .info-item { 
+        padding: 1rem; 
+        background: #f8f9fa; 
+        border-radius: 0.75rem; 
+        height: 100%;
+        transition: all 0.2s;
+    }
+    .info-item:hover {
+        background: #e9ecef;
+        transform: translateY(-2px);
+    }
 
     /* Dark Mode Overrides */
     [data-theme="dark"] .bg-light { background-color: #1e1e1e !important; color: #e0e0e0; }
@@ -175,6 +330,12 @@
     [data-theme="dark"] .bg-white { background-color: #1e1e1e !important; }
     [data-theme="dark"] .bg-success-subtle { background-color: rgba(25, 135, 84, 0.2) !important; color: #75b798; border-color: #198754; }
     [data-theme="dark"] .bg-secondary-subtle { background-color: rgba(108, 117, 125, 0.2) !important; color: #a7acb1; border-color: #6c757d; }
+    [data-theme="dark"] .bg-primary-subtle { background-color: rgba(13, 110, 253, 0.2) !important; color: #6ea8fe; }
+    [data-theme="dark"] .modal-content { background-color: #2b2b2b; color: #e0e0e0; }
+    [data-theme="dark"] .modal-footer { background-color: #1e1e1e !important; }
+    [data-theme="dark"] .info-item { background-color: #1e1e1e; }
+    [data-theme="dark"] .info-item:hover { background-color: #333; }
+    [data-theme="dark"] .card.bg-light { background-color: #1e1e1e !important; }
 </style>
 
 <script>

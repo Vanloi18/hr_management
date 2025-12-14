@@ -220,8 +220,6 @@ $title = "Đăng nhập hệ thống";
                     </div>
 
                     <?php 
-                    // QUAN TRỌNG: Xóa ngay session này sau khi đã hiển thị
-                    // Để khi F5 lại trang, thông báo này sẽ biến mất
                     unset($_SESSION['auth_message']); 
                     ?>
                 <?php endif; ?>
