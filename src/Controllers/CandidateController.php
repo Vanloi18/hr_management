@@ -279,9 +279,6 @@ class CandidateController extends Controller
     public function destroy()
     {
         $this->checkAuthentication();
-        
-        header('Content-Type: application/json');
-
         try {
             $id = $_POST['id'] ?? null;
             if (!$id) {
@@ -291,8 +288,6 @@ class CandidateController extends Controller
             $candidate = $this->candidateModel->find($id);
 
             $this->candidateModel->delete($id);
-
-            // Xóa file vật lý (nếu có)
             if ($candidate && $candidate['cv_file_path']) {
                 $filePath = self::CV_UPLOAD_DIR . basename($candidate['cv_file_path']);
                 if (file_exists($filePath)) {
@@ -300,18 +295,13 @@ class CandidateController extends Controller
                 }
             }
 
-            echo json_encode([
-                'success' => true,
-                'message' => 'Đã xóa ứng viên (và file CV liên quan).'
-            ]);
+            $_SESSION['success'] = 'Đã xóa ứng viên và file CV liên quan thành công.';
+            header('Location: ' . BASE_URL . '/candidates');
             exit();
 
         } catch (\Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                'success' => false,
-                'message' => $e->getMessage()
-            ]);
+            $_SESSION['error'] = 'Lỗi: ' . $e->getMessage();
+            header('Location: ' . BASE_URL . '/candidates');
             exit();
         }
     }

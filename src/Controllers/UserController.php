@@ -182,18 +182,12 @@ class UserController extends Controller
     public function destroy()
     {
         $this->requireAdmin();
-        
-        // Luôn trả về JSON
-        header('Content-Type: application/json');
 
         try {
             // 1. Nhận dữ liệu
             $id = $_POST['id'] ?? null;
             $tokenFromPost = $_POST['csrf_token'] ?? '';
             $tokenFromSession = $_SESSION['csrf_token'] ?? '';
-
-            // Ghi log để debug (Kiểm tra file C:\xampp\apache\logs\error.log nếu lỗi)
-            error_log("DELETE USER: ID=$id | TokenPost=$tokenFromPost | TokenSession=$tokenFromSession");
 
             // 2. Kiểm tra ID
             if (!$id) {
@@ -220,40 +214,33 @@ class UserController extends Controller
             // 6. Thực hiện xóa
             $this->userModel->delete($id);
 
-            echo json_encode(['success' => true, 'message' => 'Xóa thành công.']);
+            $_SESSION['success'] = 'Đã xóa người dùng thành công.';
+             header('Location: ' . BASE_URL . '/users');
             exit();
 
         } catch (\Exception $e) {
-            // Trả về HTTP 200 nhưng success = false để JS xử lý alert
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+           $_SESSION['error'] = $e->getMessage();
+            header('Location: ' . BASE_URL . '/users');
             exit();
         }
     }
 
-    /**
-     * Xuất Excel danh sách User
-     */
     public function exportExcel()
     {
         $this->requireAdmin();
 
-        // 1. Lấy tham số filter
         $keyword = $_GET['keyword'] ?? '';
         $role    = $_GET['role'] ?? '';
 
-        // 2. Lấy dữ liệu
         $users = $this->userModel->getAllForExport($keyword, $role);
 
-        // 3. Khởi tạo Excel
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Danh sách Tài khoản');
 
-        // Header
         $headers = ['ID', 'Họ tên', 'Email', 'Vai trò', 'Trạng thái', 'Ngày tạo'];
         $sheet->fromArray([$headers], NULL, 'A1');
 
-        // Data
         $rows = [];
         foreach ($users as $user) {
             // Xử lý hiển thị text
@@ -274,7 +261,6 @@ class UserController extends Controller
             $sheet->fromArray($rows, NULL, 'A2');
         }
 
-        // Style
         $lastRow = count($rows) + 1;
         $sheet->getStyle("A1:F{$lastRow}")->applyFromArray([
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
@@ -286,7 +272,6 @@ class UserController extends Controller
         ]);
         foreach (range('A', 'F') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
 
-        // Output
         $fileName = 'DS_TaiKhoan_' . date('dmY_Hi') . '.xlsx';
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $fileName . '"');
@@ -297,9 +282,6 @@ class UserController extends Controller
         exit;
     }
 
-    /**
-     * Xuất PDF danh sách User
-     */
     public function exportPDF()
     {
         $this->requireAdmin();
@@ -309,7 +291,6 @@ class UserController extends Controller
 
         $users = $this->userModel->getAllForExport($keyword, $role);
 
-        // HTML Template
         $html = '
         <html>
         <head>

@@ -74,7 +74,19 @@
             </div>
         </div>
     </div>
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 rounded-3 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
 
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 rounded-3 mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>                                
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -156,13 +168,16 @@
                                             </a>
                                             
                                            <?php if($user['id'] != $_SESSION['user']['id']): ?>
-                                                <button type="button" 
-                                                        class="btn btn-icon btn-light text-danger rounded-circle btn-delete-user"
-                                                        data-id="<?php echo e($user['id']); ?>"
-                                                        data-url="<?php echo BASE_URL; ?>/users/delete" 
-                                                        data-bs-toggle="tooltip" title="Xóa tài khoản">
-                                                    <i class="bi bi-trash-fill"></i>
-                                                </button>
+                                                <form action="<?php echo BASE_URL; ?>/users/delete" method="POST" 
+                                                    class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa người dùng này?');">
+                                                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
+                                                    <input type="hidden" name="id" value="<?php echo e($user['id']); ?>">
+                                                    
+                                                    <button type="submit" class="btn btn-icon btn-light text-danger rounded-circle" 
+                                                            data-bs-toggle="tooltip" title="Xóa tài khoản">
+                                                        <i class="bi bi-trash-fill"></i>
+                                                    </button>
+                                                </form>
                                             <?php endif; ?>
                                         </div>
                                     </td>

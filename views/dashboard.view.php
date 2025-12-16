@@ -197,50 +197,12 @@ $full_name = $full_name ?? $_SESSION['user']['full_name'] ?? 'Admin';
 </div>
 
 <style>
-    /* ===== WELCOME BANNER STYLES ===== */
-    .welcome-banner {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        animation: fadeInDown 0.6s ease;
-    }
-    
-    .welcome-banner:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.2) !important;
-    }
-    
-    .welcome-icon {
-        transition: transform 0.3s ease;
-    }
-    
-    .welcome-banner:hover .welcome-icon {
-        transform: scale(1.1) rotate(10deg);
-    }
-    
-    .welcome-bg {
-        animation: float 6s ease-in-out infinite;
-    }
-
     /* ===== SECTION HEADER ===== */
     .section-header {
         animation: fadeInUp 0.6s ease 0.2s backwards;
     }
 
     /* ===== QUICK CARDS STYLES ===== */
-    .quick-card {
-        transition: all 0.3s ease;
-        animation: fadeInUp 0.6s ease backwards;
-    }
-    
-    .quick-card:nth-child(1) { animation-delay: 0.3s; }
-    .quick-card:nth-child(2) { animation-delay: 0.4s; }
-    .quick-card:nth-child(3) { animation-delay: 0.5s; }
-    .quick-card:nth-child(4) { animation-delay: 0.6s; }
-    
-    .quick-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.15) !important;
-    }
-    
     .icon-circle {
         width: 80px;
         height: 80px;
@@ -250,34 +212,6 @@ $full_name = $full_name ?? $_SESSION['user']['full_name'] ?? 'Admin';
         justify-content: center;
         transition: all 0.3s ease;
         box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    }
-    
-    .quick-card:hover .icon-circle {
-        transform: scale(1.1) rotate(360deg);
-    }
-    
-    .quick-card .btn {
-        transition: all 0.3s ease;
-    }
-    
-    .quick-card:hover .btn {
-        transform: scale(1.05);
-    }
-
-    /* ===== ANIMATIONS ===== */
-    @keyframes fadeInDown {
-        from { opacity: 0; transform: translateY(-30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @keyframes float {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        50% { transform: translate(20px, 20px) scale(1.1); }
     }
 
     /* ===== RESPONSIVE ===== */
@@ -296,7 +230,7 @@ $full_name = $full_name ?? $_SESSION['user']['full_name'] ?? 'Admin';
     .card { transition: all 0.3s ease; }
 
     /* =========================================================
-       🔥🔥 DARK MODE OVERRIDES (QUAN TRỌNG) 🔥🔥
+        DARK MODE OVERRIDES (QUAN TRỌNG) 
        ========================================================= */
     
     /* 1. Tiêu đề mục (Lối tắt nhanh) */

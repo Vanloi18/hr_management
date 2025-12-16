@@ -453,7 +453,6 @@ class EmployeeController extends Controller
         $html .= '</tbody></table></body></html>';
 
         try {
-            // A4 Landscape (Khổ ngang) để hiển thị đủ cột
             $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4-L']); 
             $mpdf->WriteHTML($html);
             $mpdf->Output('DS_NhanVien_' . date('dmY') . '.pdf', 'D');

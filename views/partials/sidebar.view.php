@@ -114,14 +114,6 @@ $isAdminModule = (
                    <i class="bi bi-pie-chart-fill"></i> Thống kê
                 </a>
             </li>
-
-            <li class="nav-item">
-                <a class="nav-link ajax-link <?php echo strpos($currentPath, '/settings') !== false ? 'active' : ''; ?>"
-                   href="#" data-url="<?php echo BASE_URL; ?>/settings" data-title="Cài đặt hệ thống">
-                   <i class="bi bi-sliders"></i> Cài đặt
-                </a>
-            </li>
-
         </ul>
     </div>
 </aside>

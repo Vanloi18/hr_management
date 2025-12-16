@@ -35,7 +35,7 @@
                 <div class="col-md-3">
                     <select name="status" class="form-select rounded-pill bg-light border-0 cursor-pointer">
                         <option value="">-- Trạng thái hồ sơ --</option>
-                        <option value="applied" <?php echo (isset($status) && $status === 'applied') ? 'selected' : ''; ?>>Chờ duyệt (Applied)</option>
+                        <option value="pending" <?php echo (isset($status) && $status === 'pending') ? 'selected' : ''; ?>>Chờ duyệt</option>
                         <option value="interviewing" <?php echo (isset($status) && $status === 'interviewing') ? 'selected' : ''; ?>>Phỏng vấn</option>
                         <option value="hired" <?php echo (isset($status) && $status === 'hired') ? 'selected' : ''; ?>>Đã tuyển</option>
                         <option value="rejected" <?php echo (isset($status) && $status === 'rejected') ? 'selected' : ''; ?>>Từ chối</option>
@@ -55,7 +55,7 @@
                                 $queryString = http_build_query([
                                     'keyword' => $keyword ?? '',
                                     'status' => $status ?? '',
-                                    'position_id' => $position_id ?? '' // Lưu ý: dùng position_id cho Ứng viên
+                                    'position_id' => $position_id ?? '' 
                                 ]);
                             ?>
                             <li>
@@ -77,6 +77,13 @@
             </form>
         </div>
     </div>
+    
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i><?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php endif; ?>
 
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="card-body p-0">
@@ -173,6 +180,7 @@
                                         
                                         <form method="POST" action="<?php echo BASE_URL; ?>/candidates/delete" 
                                               class="d-inline-block" onsubmit="return confirm('Bạn có chắc chắn muốn xóa hồ sơ này?');">
+                                            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
                                             <input type="hidden" name="id" value="<?php echo e($candidate['id']); ?>">
                                             <button type="submit" class="btn btn-sm btn-light text-secondary border-0 btn-icon" 
                                                     title="Xóa hồ sơ" data-bs-toggle="tooltip">
@@ -214,7 +222,7 @@
     .cursor-pointer { cursor: pointer; }
     
     .pagination .page-item.active .page-link {
-        background-color: #198754; /* Màu xanh success */
+        background-color: #198754;
         border-color: #198754;
         color: white !important;
     }

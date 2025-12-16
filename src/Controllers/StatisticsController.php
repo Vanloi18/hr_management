@@ -1,22 +1,15 @@
 <?php
-
 namespace App\Controllers;
-
 use App\Core\Controller;
 use App\Models\Report;
-// Import thư viện Export
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use Mpdf\Mpdf;
-
 class StatisticsController extends Controller
 {
-    /**
-     * Hiển thị Dashboard Thống kê
-     */
     public function index()
     {
         $this->checkAuthentication();
@@ -69,9 +62,6 @@ class StatisticsController extends Controller
         return view('statistics/index', $data);
     }
 
-    /**
-     * Xuất Excel (Số liệu chi tiết)
-     */
     public function exportExcel()
     {
         $this->checkAuthentication();
@@ -99,7 +89,6 @@ class StatisticsController extends Controller
 
         $sheet->fromArray($rows, NULL, 'A2');
 
-        // Style
         $lastRow = count($rows) + 1;
         $sheet->getStyle("A1:C{$lastRow}")->applyFromArray([
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
@@ -112,7 +101,6 @@ class StatisticsController extends Controller
         $sheet->getStyle("A{$lastRow}:C{$lastRow}")->getFont()->setBold(true);
         foreach (range('A', 'C') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
 
-        // Output
         $fileName = 'Bao_cao_nhan_su_' . date('dmY_Hi') . '.xlsx';
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $fileName . '"');
@@ -123,9 +111,6 @@ class StatisticsController extends Controller
         exit;
     }
 
-    /**
-     * Xuất PDF (Kèm Biểu đồ từ Client gửi lên)
-     */
     public function exportPDF()
     {
         $this->checkAuthentication();
@@ -136,12 +121,10 @@ class StatisticsController extends Controller
         $activeEmp = $reportModel->getTotalActiveEmployees();
         $totalCandidates = $reportModel->getTotalCandidates();
 
-        // Nhận ảnh Chart từ POST (Base64 String)
         $chartCV = $_POST['chart_cv'] ?? '';
         $chartEmp = $_POST['chart_emp'] ?? '';
         $chartPos = $_POST['chart_pos'] ?? '';
 
-        // HTML Template
         $html = '
         <html>
         <head>
@@ -212,7 +195,6 @@ class StatisticsController extends Controller
                     </tr>
                 </thead>
                 <tbody>';
-        
         $stt = 1;
         $total = 0;
         foreach ($deptStats as $item) {
@@ -228,13 +210,10 @@ class StatisticsController extends Controller
                 <td colspan="2">TỔNG CỘNG</td>
                 <td>' . $total . '</td>
             </tr>';
-
         $html .= '</tbody></table></body></html>';
 
-        // Xuất PDF
         try {
             $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4']);
-            // Cho phép load ảnh base64 lớn
             $mpdf->showImageErrors = true; 
             $mpdf->WriteHTML($html);
             $mpdf->Output('Bao_cao_thong_ke_' . date('dmY') . '.pdf', 'D');

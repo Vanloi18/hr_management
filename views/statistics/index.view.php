@@ -200,29 +200,8 @@
 </div>
 
 <style>
-    /* Giữ nguyên style cũ của bạn */
-    .dashboard-icon { transition: transform 0.3s ease; }
-    .dashboard-icon:hover { transform: scale(1.1) rotate(5deg); }
-    .stat-card { transition: all 0.3s ease; position: relative; overflow: hidden; }
-    .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important; }
-    .stat-icon { transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    .stat-card:hover .stat-icon { transform: scale(1.1) rotate(-5deg); }
-    .stat-icon-bg { position: absolute; top: -50%; right: -20%; width: 200px; height: 200px; border-radius: 50%; opacity: 0.1; transition: all 0.5s ease; }
-    .stat-card:hover .stat-icon-bg { transform: scale(1.2) rotate(45deg); opacity: 0.15; }
-    .chart-card { transition: all 0.3s ease; }
-    .chart-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important; }
-    .chart-icon { transition: transform 0.3s ease; }
-    .chart-card:hover .chart-icon { transform: rotate(360deg); }
-    .quick-stat { transition: all 0.3s ease; padding: 1rem; border-radius: 10px; }
-    .quick-stat:hover { background: rgba(0,0,0,0.02); transform: scale(1.05); }
     .badge { transition: all 0.3s ease; }
     .badge:hover { transform: scale(1.05); }
-    @media (max-width: 768px) {
-        .stat-card .card-body { padding: 1.5rem !important; }
-        .stat-icon { padding: 0.75rem !important; }
-        .stat-icon i { font-size: 1.5rem !important; }
-        h2 { font-size: 1.75rem; }
-    }
     .chart-card .card-header::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, #667eea, #764ba2, #11998e, #38ef7d); opacity: 0.3; }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
     .stat-card, .chart-card { animation: fadeInUp 0.6s ease; }
