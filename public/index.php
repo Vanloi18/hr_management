@@ -17,15 +17,9 @@
         $uri = rtrim($uri, '/');
     }
     if (strpos($uri, '/careers') !== false) {
-    
-    // Import Controller thủ công (để chắc chắn load được file)
-    require_once BASE_PATH . 'src/Controllers/PublicController.php';
-    
-    // Vì class PublicController không có namespace (theo code cũ mình đưa), 
-    // nên gọi trực tiếp. Nếu bạn đã thêm namespace App\Controllers thì sửa thành:
-    // $controller = new \App\Controllers\PublicController();
-    $controller = new \App\Controllers\PublicController();
 
+    require_once BASE_PATH . 'src/Controllers/PublicController.php';
+    $controller = new \App\Controllers\PublicController();
     if (strpos($uri, '/careers/apply') !== false) {
         $controller->apply();
     } 
@@ -33,11 +27,10 @@
         $controller->detail();
     }
     else {
-        // Mặc định vào danh sách việc làm
         $controller->index();
     }
     
-    exit; // QUAN TRỌNG: Dừng code tại đây, không cho chạy tiếp xuống Router Admin bên dưới
+    exit;
 }
 
     $router->get('/login', 'AuthController@index');
@@ -129,7 +122,7 @@
     // Routes cho Cài đặt (Settings)
     $router->get('/settings', 'SettingController@index');
     $router->post('/settings/update', 'SettingController@update');
-    $router->post('/settings/update', 'SettingController@update'); // Tab 1: Cài đặt chung
+    $router->post('/settings/update', 'SettingController@update');
 
     // ----- Route mặc định (Trang chủ / Dashboard) -----
     $router->get('/', 'DashboardController@index');
@@ -145,27 +138,21 @@
         try {
             validate_csrf();
         } catch (\Exception $e) {
-            // Nếu token lỗi, dừng ứng dụng ngay lập tức
-            http_response_code(403); // 403 Forbidden
+            http_response_code(403); 
             flash('error', 'Lỗi bảo mật: ' . $e->getMessage() . ' Vui lòng thử lại.');
-            // Chuyển hướng về trang trước đó (hoặc trang chủ)
             redirect($_SERVER['HTTP_REFERER'] ?? '/');
         }
     }
 
-    // 7. Điều hướng (Dispatch)
-    // Router sẽ tìm Controller tương ứng với $uri và $method
     try {
         $router->dispatch($uri, $method);
     } catch (\App\Core\Exceptions\RouteNotFoundException $e) {
-        // Xử lý khi không tìm thấy route (404)
-        // Em có thể tạo một view 404 đẹp hơn
         http_response_code(404);
         echo "404 - Page Not Found";
     } catch (\App\Core\Exceptions\UnauthorizedException $e) {
         http_response_code(403);
-        flash('error', $e->getMessage()); // Hiển thị lỗi
-        redirect('/login'); // Đưa về trang login
+        flash('error', $e->getMessage());
+        redirect('/login'); 
     } catch (\Exception $e) {
         http_response_code(500);
         echo "<h1>500 - Lỗi Server</h1><p>" . $e->getMessage() . "</p>";

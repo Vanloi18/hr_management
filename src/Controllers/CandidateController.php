@@ -35,8 +35,6 @@ class CandidateController extends Controller
         $this->positionModel = new Position();
     }
 
-
-    // [Hàm INDEX]
     public function index()
     {
         $this->checkAuthentication();
@@ -45,9 +43,9 @@ class CandidateController extends Controller
         $keyword     = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
         $status      = isset($_GET['status']) ? trim($_GET['status']) : '';
         $position_id = isset($_GET['position_id']) ? trim($_GET['position_id']) : '';
+
         $page        = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         if ($page < 1) $page = 1;
-
         $limit  = 10;
         $offset = ($page - 1) * $limit;
 
@@ -115,7 +113,6 @@ class CandidateController extends Controller
         ];
 
         if (!$validator->validate($_POST, $rules)) {
-            // Validator đã tự động flash lỗi và redirect
             return; 
         }
 
@@ -123,13 +120,12 @@ class CandidateController extends Controller
         $file_info = $_FILES['cv_file'] ?? null;
         if (empty($file_info) || $file_info['error'] === UPLOAD_ERR_NO_FILE) {
              flash('error', 'File CV là bắt buộc khi tạo mới hồ sơ.');
-             // Dùng $_POST để giữ lại giá trị cũ trong form
              $_SESSION['_flash']['old'] = $_POST;
              redirect('/candidates/create');
         }
 
         $data = $validator->validatedData();
-        $data['status'] = e($_POST['status'] ?? 'applied'); // Mặc định là applied (đã nộp) hoặc pending
+        $data['status'] = e($_POST['status'] ?? 'applied');
         $data['notes'] = e($_POST['notes'] ?? null);
         $data['applied_at'] = date('Y-m-d H:i:s'); 
         $data['interview_date'] = null;
