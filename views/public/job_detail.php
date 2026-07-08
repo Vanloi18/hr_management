@@ -6,55 +6,156 @@
     <title><?php echo htmlspecialchars($job['title']); ?> - Chi tiết tuyển dụng</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
     
     <style>
+        /* ===== CSS VARIABLES ===== */
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-card: #13131a;
+            --border: #2a2a3a;
+            --accent: #c9a84c;
+            --text-primary: #f0f0f5;
+            --text-muted: #6b6b80;
+            --salary-green: #22c55e;
+        }
+
         body {
-            background-color: #f5f5f5;
-            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #0d0510 50%, #0a0a0f 100%);
+            font-family: 'DM Sans', sans-serif;
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(201, 168, 76, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+            animation: meshGradient 15s ease infinite;
+        }
+
+        @keyframes meshGradient {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(20px, 10px); }
         }
 
         .page-header {
-            background-color: #2563eb;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 50%, #16213e 100%);
             color: white;
-            padding: 30px 0;
-            margin-bottom: 30px;
+            padding: 50px 0;
+            margin-bottom: 40px;
+            border-bottom: 1px solid rgba(201, 168, 76, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 30% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 70% 30%, rgba(201, 168, 76, 0.08) 0%, transparent 40%);
+            pointer-events: none;
         }
 
         .back-link {
-            color: white;
+            color: var(--accent);
             text-decoration: none;
             margin-bottom: 15px;
             display: inline-block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
         }
 
         .back-link:hover {
-            text-decoration: underline;
+            color: #e0bb6c;
+            transform: translateX(-4px);
         }
 
         .job-title {
-            font-size: 2rem;
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
             margin-bottom: 15px;
+            color: var(--text-primary);
+            font-weight: 700;
+            position: relative;
+            z-index: 2;
+            letter-spacing: -1px;
         }
 
         .job-meta {
-            font-size: 1rem;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            position: relative;
+            z-index: 2;
+        }
+
+        .job-meta i {
+            color: var(--accent);
+            margin-right: 6px;
         }
 
         .content-section {
-            background: white;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
+            background: var(--bg-card);
+            padding: 28px;
+            margin-bottom: 24px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            animation: fadeInUp 0.6s ease 0.2s backwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .section-title {
-            font-size: 1.3rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #333;
-            border-bottom: 2px solid #2563eb;
-            padding-bottom: 10px;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            border-bottom: 2px solid rgba(201, 168, 76, 0.3);
+            padding-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .content-section div,
+        .content-section ul li {
+            color: var(--text-muted);
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        .content-section ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .content-section ul li {
+            margin-bottom: 8px;
+            color: var(--text-muted);
         }
 
         .info-table {
@@ -62,52 +163,126 @@
         }
 
         .info-table tr {
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border);
         }
 
         .info-table td {
             padding: 12px 0;
+            color: var(--text-muted);
+            font-size: 0.95rem;
         }
 
         .info-table td:first-child {
-            font-weight: bold;
+            font-weight: 600;
             width: 40%;
+            color: var(--accent);
+        }
+
+        .info-table i {
+            color: var(--accent);
+            margin-right: 6px;
         }
 
         .apply-box {
-            background: white;
-            padding: 25px;
-            border-radius: 5px;
-            border: 2px solid #2563eb;
+            background: var(--bg-card);
+            padding: 28px;
+            border-radius: 8px;
+            border: 2px solid rgba(201, 168, 76, 0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 0.6s ease 0.3s backwards;
         }
 
         .apply-box h4 {
             text-align: center;
-            margin-bottom: 20px;
-            color: #2563eb;
+            margin-bottom: 24px;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            color: var(--accent);
+            font-weight: 700;
         }
 
         .form-label {
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
         }
 
         .form-control {
-            margin-bottom: 15px;
+            background: rgba(45, 45, 60, 0.5);
+            border: 1px solid rgba(201, 168, 76, 0.15);
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            border-radius: 6px;
+            padding: 10px 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+
+        .form-control:focus {
+            background: rgba(45, 45, 60, 0.7);
+            border-color: var(--accent);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.1);
         }
 
         .btn-submit {
-            background-color: #2563eb;
-            color: white;
+            background: var(--accent);
+            color: var(--bg-primary);
             width: 100%;
             padding: 12px;
-            font-weight: bold;
+            font-weight: 700;
             border: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
         }
 
         .btn-submit:hover {
-            background-color: #1d4ed8;
-            color: white;
+            background: #e0bb6c;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(201, 168, 76, 0.3);
+            color: var(--bg-primary);
+        }
+
+        small.text-muted {
+            color: var(--text-muted) !important;
+            font-size: 0.8rem;
+            display: block;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                padding: 30px 0;
+            }
+
+            .job-title {
+                font-size: 1.5rem;
+            }
+
+            .job-meta {
+                font-size: 0.85rem;
+            }
+
+            .content-section {
+                padding: 16px;
+            }
+
+            .section-title {
+                font-size: 1.1rem;
+            }
+
+            .apply-box {
+                padding: 16px;
+            }
         }
     </style>
 </head>
